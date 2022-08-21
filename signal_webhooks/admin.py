@@ -1,9 +1,20 @@
+import logging
+
 from django import forms
 from django.contrib import admin
 
 from .settings import webhook_settings
 from .typing import Optional
 from .utils import get_webhookhook_model
+
+
+__all__ = [
+    "WebhookModelForm",
+    "WebhookAdmin",
+]
+
+
+logger = logging.getLogger(__name__)
 
 
 WebhookModel = get_webhookhook_model()
@@ -40,7 +51,7 @@ class WebhookModelForm(forms.ModelForm):
 
 
 @admin.register(WebhookModel)
-class HookAdmin(admin.ModelAdmin):
+class WebhookAdmin(admin.ModelAdmin):
     form = WebhookModelForm
     list_display = [
         "name",
