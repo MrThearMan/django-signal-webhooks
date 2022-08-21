@@ -70,7 +70,7 @@ checkbox will allow webhook responses to be recorded in the
 `last_reponse` field.
 
 
-![Webhooks in admin panel](/img/admin_panel.png)
+![Webhooks in admin panel][admin_panel]
 
 
 ## ⑤ That's it!
@@ -129,4 +129,5 @@ basis by defining a `webhook_data` method on the model.
 Have a look at the available [settings].
 
 
-[settings]: ../signal_webhooks/serializers.py
+[admin_panel]: https://raw.githubusercontent.com/MrThearMan/django-signal-webhooks/main/docs/img/admin_panel.png
+[settings]: https://github.com/MrThearMan/django-signal-webhooks/blob/main/signal_webhooks/settings.py
