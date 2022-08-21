@@ -1,0 +1,125 @@
+from django.conf import settings
+from django.test.signals import setting_changed
+from settings_holder import SettingsHolder, reload_settings
+
+from .typing import Any, Dict, HooksData, Literal, NamedTuple, Optional, Set, Union
+
+
+__all__ = [
+    "webhook_settings",
+]
+
+
+class DefaultSettings(NamedTuple):
+    #
+    # Defines hooks for models. Key in the dict is the dot import path for a model,
+    # e.g., "django.contrib.auth.models.User", and the value for a key defines that
+    # model's hooks. Setting the value (or any of value for the keys in 'HooksData')
+    # to ... (ellipses) will use the default handlers for the model (or appropriate
+    # signal from 'HooksData' key). Setting the value (or any of value for the keys in
+    # 'HooksData') to None will explicitly not allow hooks for that model (or appropriate
+    # signal from 'HooksData' key). Webhooks cannot be created without the appropriate
+    # definition in this setting.
+    HOOKS: Dict[str, Optional[HooksData]] = {}
+    #
+    # Timeout for responses from webhooks before they fail.
+    TIMEOUT: int = 10
+    #
+    # Cipher key to use when encrypting tokens into the database.
+    # Should be 16, 24, or 32 bytes converted to base64. You can use
+    # 'signal_webhooks.utils.random_cipher_key' to generate one.
+    CIPHER_KEY: Optional[str] = None
+    #
+    # When this is set to True, auth_token will be hidden in admin panel after
+    # it has been set. A small snippet from the end of the code will be shown
+    # in the helptext for the field. Saving the model again without adding another
+    # token will reuse the hidden token.
+    HIDE_TOKEN: bool = False
+    #
+    # Default serializer function to use for serializing model to json-acceptable
+    # data. Takes these arguments (instance: Model, hook: Webhook), and should return
+    # data matching 'signal_webhooks.typing.JSONData'.
+    #
+    # Can also be overridden on per-model basis by declaring a 'webhook_data'
+    # method on the model. This function takes these arguments: (hook: Webhook),
+    # and should return data matching 'signal_webhooks.typing.JSONData'.
+    SERIALIZER: str = "signal_webhooks.utils.default_serializer"
+    #
+    # Default argument builder function for the client that sends the webhooks.
+    # If this function is overridden, 'SERIALIZER' function will not be called, so
+    # you'll have to provide the reponse content in this function. Takes these
+    # arguments (instance: Model, hook: Webhook), and should return data matching
+    # 'signal_webhooks.typing.ClientMethodKwargs'.
+    #
+    # Can also be overridden on per-model basis by declaring a 'webhook_client_kwargs'
+    # method on the model. This function takes these arguments: (hook: Webhook),
+    # and should return data matching 'signal_webhooks.typing.ClientMethodKwargs'.
+    CLIENT_KWARGS: str = "signal_webhooks.utils.default_client_kwargs"
+    #
+    # Error handing function that will be called if a webhook fails. Takes these
+    # arguments (hook: Webhook, error: Optional[Exception]) and returns None.
+    # "error" will be given if the webhook timed out, or a response from the
+    # client could not otherwise be created. Note, that the handler will be run
+    # inside an async event loop, so 'asgiref.sync_to_async' should be used for
+    # any database calls.
+    ERROR_HANDLER: str = "signal_webhooks.handlers.default_error_handler"
+    #
+    # Function that starts the hook once it has been found. Takes these arguments
+    # (hook: Callable[..., None], kwargs: Union[PostSaveData, PostDeleteData])
+    # and returns None. The default handler starts a thread that calls the hook
+    # with the given kwargs.
+    TASK_HANDLER: str = "signal_webhooks.handlers.thead_task_handler"
+    #
+    # Unique id for the 'signals.post_save' receiver the webhooks are using.
+    DISPATCH_UID_POST_SAVE: str = "django-signal-webhooks-post-save"
+    #
+    # Unique id for the 'signals.post_delete' receiver the webhooks are using.
+    DISPATCH_UID_POST_DELETE: str = "django-signal-webhooks-post-delete"
+
+
+SETTING_NAME: str = "SIGNAL_WEBHOOKS"
+
+USER_SETTINGS: Optional[Dict[str, Any]] = getattr(settings, SETTING_NAME, None)
+
+DEFAULTS = DefaultSettings()._asdict()
+
+IMPORT_STRINGS: Set[Union[bytes, str]] = {
+    "HOOKS",
+    "SERIALIZER",
+    "CLIENT_KWARGS",
+    "ERROR_HANDLER",
+    "TASK_HANDLER",
+}
+
+REMOVED_SETTINGS: Set[str] = set()
+
+
+class WebhookSettingsHolder(SettingsHolder):
+    def perform_import(self, val: Any, setting: str) -> Any:
+        if setting not in {"HOOKS"}:
+            return super().perform_import(val, setting)  # pragma: no cover
+
+        val: Dict[str, HooksData]
+        method: Literal["CREATE", "UPDATE", "DELETE"]
+        for model_path, webhooks in val.items():
+            if webhooks in (..., None):
+                continue
+
+            for method, func_path in webhooks.items():
+                if func_path in (..., None):
+                    continue
+
+                val[model_path][method] = self.import_from_string(func_path, setting)
+
+        return val
+
+
+webhook_settings = WebhookSettingsHolder(
+    user_settings=USER_SETTINGS,
+    defaults=DEFAULTS,
+    import_strings=IMPORT_STRINGS,
+    removed_settings=REMOVED_SETTINGS,
+)
+
+reload_my_settings = reload_settings(SETTING_NAME, webhook_settings)
+setting_changed.connect(reload_my_settings)
