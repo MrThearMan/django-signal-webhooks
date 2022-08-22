@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - "**.py"
+      - ".github/workflows/test.yml"
       - "pyproject.toml"
       - "poetry.lock"
 
