@@ -1,4 +1,4 @@
-site_name: Django REST Framework Webhooks
+site_name: Django Signal Webhooks
 
 nav:
   - Home: index.md
