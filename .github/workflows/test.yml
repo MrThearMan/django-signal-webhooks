@@ -24,13 +24,11 @@ jobs:
     strategy:
       matrix:
         os: [ ubuntu-latest, macos-latest, windows-latest ]
-        python-version: ["3.8", "3.9", "3.10", "3.11.0b1 - 3.11"]
-        # These are not working for some reason ATM
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        # Sqlite3 not working properly for this version
         exclude:
           - os: windows-latest
             python-version: "3.8"
-          - os: macos-latest
-            python-version: "3.11.0b1 - 3.11"
 
     env:
       COVERALLS_FLAG_NAME: python${{ matrix.python-version }}-${{ matrix.os }}
@@ -48,7 +46,7 @@ jobs:
       - name: Set up poetry
         uses: abatilo/actions-poetry@v2.1.6
         with:
-          poetry-version: "1.2.0"
+          poetry-version: "1.2.2"
 
       - name: Load cached venv
         id: cache-venv
@@ -88,7 +86,7 @@ jobs:
       - name: Set up poetry
         uses: abatilo/actions-poetry@v2.1.6
         with:
-          poetry-version: "1.2.0"
+          poetry-version: "1.2.2"
 
       - name: Load cached venv
         id: cache-venv

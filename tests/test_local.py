@@ -7,6 +7,9 @@ from signal_webhooks.typing import SignalChoices
 from tests.my_app.models import MyModel
 
 
+ENDPOINT = "https://4b4e-194-137-1-169.eu.ngrok.io"
+
+
 @pytest.mark.e2e
 @pytest.mark.skipif(getenv("CI", "false") == "true", reason="Only for testing locally")
 @pytest.mark.django_db(transaction=True)
@@ -23,7 +26,7 @@ def test_webhook_e2e__single_webhook__ngrok(settings):
         name="foo",
         signal=SignalChoices.ALL,
         ref="tests.my_app.models.MyModel",
-        endpoint="https://1cc2-194-137-1-169.eu.ngrok.io" + "/hook/",
+        endpoint=ENDPOINT + "/hook/",
     )
 
     user = MyModel(name="x")

@@ -37,23 +37,19 @@ class DefaultSettings(NamedTuple):
     HIDE_TOKEN: bool = False
     #
     # Default serializer function to use for serializing model to json-acceptable
-    # data. Takes these arguments (instance: Model, hook: Webhook), and should return
+    # data. Takes these arguments (instance: Model), and should return
     # data matching 'signal_webhooks.typing.JSONData'.
     #
     # Can also be overridden on per-model basis by declaring a 'webhook_data'
-    # method on the model. This function takes these arguments: (hook: Webhook),
-    # and should return data matching 'signal_webhooks.typing.JSONData'.
+    # method on the model. This function takes no arguments, and should return
+    # data matching 'signal_webhooks.typing.JSONData'.
     SERIALIZER: str = "signal_webhooks.utils.default_serializer"
     #
-    # Default argument builder function for the client that sends the webhooks.
-    # If this function is overridden, 'SERIALIZER' function will not be called, so
-    # you'll have to provide the reponse content in this function. Takes these
-    # arguments (instance: Model, hook: Webhook), and should return data matching
-    # 'signal_webhooks.typing.ClientMethodKwargs'.
-    #
-    # Can also be overridden on per-model basis by declaring a 'webhook_client_kwargs'
-    # method on the model. This function takes these arguments: (hook: Webhook),
-    # and should return data matching 'signal_webhooks.typing.ClientMethodKwargs'.
+    # Default argument builder function for the http client that sends the webhooks.
+    # Takes these arguments (hook: Webhook), and should return data matching
+    # 'signal_webhooks.typing.ClientMethodKwargs'. Data from 'SERIALIZER' will be
+    # added to the 'json' argument and headers from the hook will be updated
+    # to the 'headers' argument.
     CLIENT_KWARGS: str = "signal_webhooks.utils.default_client_kwargs"
     #
     # Error handing function that will be called if a webhook fails. Takes these
@@ -65,10 +61,9 @@ class DefaultSettings(NamedTuple):
     ERROR_HANDLER: str = "signal_webhooks.handlers.default_error_handler"
     #
     # Function that starts the hook once it has been found. Takes these arguments
-    # (hook: Callable[..., None], kwargs: Union[PostSaveData, PostDeleteData])
-    # and returns None. The default handler starts a thread that calls the hook
-    # with the given kwargs.
-    TASK_HANDLER: str = "signal_webhooks.handlers.thead_task_handler"
+    # (hook: Callable[..., None], **kwargs: Any) and returns None. The default handler
+    # starts a thread that calls the hook with the given kwargs.
+    TASK_HANDLER: str = "signal_webhooks.handlers.thread_task_handler"
     #
     # Unique id for the 'signals.post_save' receiver the webhooks are using.
     DISPATCH_UID_POST_SAVE: str = "django-signal-webhooks-post-save"

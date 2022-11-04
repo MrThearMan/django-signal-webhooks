@@ -11,7 +11,7 @@ from httpx import Response
 from signal_webhooks.models import Webhook
 from signal_webhooks.typing import SignalChoices
 from signal_webhooks.utils import get_webhookhook_model
-from tests.my_app.models import MyModel, MyWebhook, TestModel
+from tests.my_app.models import MyModel, MyWebhook
 
 
 @pytest.mark.django_db
@@ -519,39 +519,6 @@ def test_webhook__single_webhook__webhook_data(settings):
 
 
 @pytest.mark.django_db(transaction=True)
-def test_webhook__single_webhook__webhook_client_kwargs(settings):
-    settings.SIGNAL_WEBHOOKS = {
-        "TASK_HANDLER": "signal_webhooks.handlers.sync_task_handler",
-        "HOOKS": {
-            "tests.my_app.models.TestModel": ...,
-        },
-    }
-
-    Webhook.objects.create(
-        name="foo",
-        signal=SignalChoices.ALL,
-        ref="tests.my_app.models.TestModel",
-        endpoint="http://www.example.com/",
-    )
-
-    item = TestModel(name="x")
-
-    with patch("signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)) as mock_1:
-        item.save()
-
-    mock_1.assert_called_once_with(
-        "http://www.example.com/",
-        json={"foo": "bar"},
-        headers={"foofoo": "barbar"},
-    )
-
-    hook = Webhook.objects.get(name="foo")
-
-    assert hook.last_success is not None
-    assert hook.last_failure is None
-
-
-@pytest.mark.django_db(transaction=True)
 def test_webhook__single_webhook__correct_signal__create_only(settings):
     settings.SIGNAL_WEBHOOKS = {
         "TASK_HANDLER": "signal_webhooks.handlers.sync_task_handler",
@@ -1045,7 +1012,7 @@ def test_webhook__single_webhook__sending_timeout(settings):
 @pytest.mark.django_db(transaction=True)
 def test_webhook__single_webhook__thread_task_handler(settings):
     settings.SIGNAL_WEBHOOKS = {
-        "TASK_HANDLER": "signal_webhooks.handlers.thead_task_handler",
+        "TASK_HANDLER": "signal_webhooks.handlers.thread_task_handler",
         "HOOKS": {
             "django.contrib.auth.models.User": ...,
         },

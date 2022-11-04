@@ -6,8 +6,6 @@ import pytest
 from django.contrib.auth.models import Group, User
 from django.core.exceptions import ValidationError
 
-from signal_webhooks.models import Webhook
-from signal_webhooks.typing import SignalChoices
 from signal_webhooks.utils import (
     decode_cipher_key,
     default_serializer,
@@ -160,14 +158,7 @@ def test_default_serializer__user():
         is_superuser=True,
     )
 
-    hook = Webhook(
-        name="foo",
-        signal=SignalChoices.ALL,
-        ref="django.contrib.auth.models.User",
-        endpoint="http://www.example.com/",
-    )
-
-    data = default_serializer(user, hook)
+    data = default_serializer(user)
 
     assert data == {
         "fields": {
@@ -193,14 +184,7 @@ def test_default_serializer__user():
 def test_default_serializer__group():
     group = Group.objects.create(name="x")
 
-    hook = Webhook(
-        name="foo",
-        signal=SignalChoices.ALL,
-        ref="django.contrib.auth.models.Group",
-        endpoint="http://www.example.com/",
-    )
-
-    data = default_serializer(group, hook)
+    data = default_serializer(group)
 
     assert data == {
         "fields": {
@@ -216,13 +200,6 @@ def test_default_serializer__group():
 def test_default_serializer__mymodel():
     mymodel = MyModel.objects.create(name="x")
 
-    hook = Webhook(
-        name="foo",
-        signal=SignalChoices.ALL,
-        ref="tests.my_app.models.MyModel",
-        endpoint="http://www.example.com/",
-    )
-
-    data = default_serializer(mymodel, hook)
+    data = default_serializer(mymodel)
 
     assert data == {"fizz": "buzz"}

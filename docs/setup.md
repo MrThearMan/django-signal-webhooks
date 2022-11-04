@@ -75,11 +75,10 @@ checkbox will allow webhook responses to be recorded in the
 
 ## ⑤ That's it!
 
-Webhooks should now be fired for the defined signals. Here are
-examples of what the default configuration will send for the User
+Webhooks should now be fired for the defined signals. Here is an
+example of what the default configuration will send for the User
 model.
 
-### Create or update
 ```json
 {
   "model": "auth.user",
@@ -95,28 +94,6 @@ model.
     "is_staff": false,
     "is_active": true,
     "date_joined": "2022-08-21 20:37:38.714905+00:00",
-    "groups": [],
-    "user_permissions": []
-  }
-}
-```
-
-### Delete
-```json
-{
-  "model": "auth.user",
-  "pk": null,
-  "fields": {
-    "password": "pbkdf2_sha256$390000$27Zxv3q6gGTDBgRuDpZsGT$qI0VfPyJO4+KkGp1oK65Q/P84ijO5NvK7BmyKN5KFLM=",
-    "last_login": null,
-    "is_superuser": false,
-    "username": "foo",
-    "first_name": "",
-    "last_name": "",
-    "email": "",
-    "is_staff": false,
-    "is_active": true,
-    "date_joined": "2022-08-21 20:36:47.233865+00:00",
     "groups": [],
     "user_permissions": []
   }

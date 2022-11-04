@@ -15,7 +15,7 @@ class MyModel(models.Model):
 
     name = models.CharField(max_length=256)
 
-    def webhook_data(self, hook: WebhookBase):
+    def webhook_data(self):
         return {"fizz": "buzz"}
 
 
@@ -23,12 +23,6 @@ class TestModel(models.Model):
     """Testing model."""
 
     name = models.CharField(max_length=256)
-
-    def webhook_client_kwargs(self, hook: WebhookBase):
-        return ClientMethodKwargs(
-            json={"foo": "bar"},
-            headers={"foofoo": "barbar"},
-        )
 
 
 class MyWebhook(WebhookBase):

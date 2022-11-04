@@ -21,7 +21,6 @@ class WebhookTestView(View):
     """This view is for testing webhooks with ngrok locally."""
 
     def post(self, request: WSGIRequest, *args, **kwargs):
-        print(request.body.decode())
         print(json.dumps(json.loads(request.body.decode()), indent=2))
         return JsonResponse({"response": "ok"}, status=200)
 

@@ -1,10 +1,11 @@
 from datetime import datetime
 
 from django.db import models
+from django.db.models.base import ModelBase
 
 from .fields import TokenField
 from .typing import Any, Dict, Optional, Sequence, SignalChoices
-from .utils import decode_cipher_key, is_dict, model_from_reference
+from .utils import decode_cipher_key, is_dict, model_from_reference, reference_for_model
 
 
 __all__ = [
@@ -16,9 +17,12 @@ __all__ = [
 class WebhookQuerySet(models.QuerySet["Webhook"]):
     """Webhook queryset."""
 
-    def get_for_model(self, model: models.Model, signals: Sequence[SignalChoices]) -> models.QuerySet["Webhook"]:
-        ref = f"{type(model).__module__}.{type(model).__name__}"
+    def get_for_ref(self, ref: str, signals: Sequence[SignalChoices]) -> models.QuerySet["Webhook"]:
         return self.filter(ref=ref, signal__in=signals, enabled=True)
+
+    def get_for_model(self, model: ModelBase, signals: Sequence[SignalChoices]) -> models.QuerySet["Webhook"]:
+        ref = reference_for_model(model)
+        return self.get_for_ref(ref, signals)
 
 
 class WebhookBase(models.Model):
@@ -116,6 +120,14 @@ class WebhookBase(models.Model):
 
     def __str__(self):
         return self.name
+
+    def default_headers(self) -> Dict[str, str]:
+        headers = self.headers.copy()
+        headers.setdefault("Content-Type", "application/json")
+        if self.auth_token:
+            headers.setdefault("Authorization", self.auth_token)
+
+        return headers
 
 
 class Webhook(WebhookBase):

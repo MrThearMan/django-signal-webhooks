@@ -28,6 +28,7 @@ __all__ = [
     "is_dict",
     "model_from_reference",
     "random_cipher_key",
+    "reference_for_model",
     "tasks_as_completed",
     "truncate",
 ]
@@ -61,26 +62,15 @@ def decode_cipher_key(value: str = "") -> bytes:  # pylint: disable=unused-argum
         raise ValidationError("Invalid cipher key.") from error
 
 
-def default_serializer(instance: Model, hook: "Webhook") -> JSONData:
+def default_serializer(instance: Model) -> JSONData:
     if hasattr(instance, "webhook_data") and callable(instance.webhook_data):
-        return instance.webhook_data(hook)
+        return instance.webhook_data()
 
     return webhook_serializer.serialize([instance])
 
 
-def default_client_kwargs(instance: Model, hook: "Webhook") -> ClientMethodKwargs:
-    if hasattr(instance, "webhook_client_kwargs") and callable(instance.webhook_client_kwargs):
-        return instance.webhook_client_kwargs(hook)
-
-    headers = hook.headers
-    headers.setdefault("Content-Type", "application/json")
-    if hook.auth_token:
-        headers.update({"Authorization": hook.auth_token})
-
-    return ClientMethodKwargs(
-        json=webhook_settings.SERIALIZER(instance, hook),
-        headers=headers,
-    )
+def default_client_kwargs(hook: "Webhook") -> ClientMethodKwargs:  # pylint: disable=unused-argument
+    return ClientMethodKwargs()
 
 
 @lru_cache(maxsize=None)
@@ -135,6 +125,10 @@ def model_from_reference(ref: str, check_hooks: bool = True) -> ModelBase:
         raise ValidationError(f"Webhooks not defined for {ref!r}.")
 
     return model_type
+
+
+def reference_for_model(model: ModelBase) -> str:
+    return f"{model.__module__}.{model.__name__}"
 
 
 async def tasks_as_completed(tasks: Set[asyncio.Task]) -> Generator[asyncio.Task, Any, None]:
