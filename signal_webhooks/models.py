@@ -21,8 +21,7 @@ class WebhookQuerySet(models.QuerySet["Webhook"]):
         return self.filter(ref=ref, signal__in=signals, enabled=True)
 
     def get_for_model(self, model: ModelBase, signals: Sequence[SignalChoices]) -> models.QuerySet["Webhook"]:
-        ref = reference_for_model(model)
-        return self.get_for_ref(ref, signals)
+        return self.get_for_ref(reference_for_model(model), signals)  # pragma: no cover
 
 
 class WebhookBase(models.Model):

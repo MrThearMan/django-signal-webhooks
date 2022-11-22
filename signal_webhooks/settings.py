@@ -95,7 +95,7 @@ class WebhookSettingsHolder(SettingsHolder):
             return super().perform_import(val, setting)  # pragma: no cover
 
         val: Dict[str, HooksData]
-        method: Literal["CREATE", "UPDATE", "DELETE"]
+        method: Literal["CREATE", "UPDATE", "DELETE"]  # noqa: F821
         for model_path, webhooks in val.items():
             if webhooks in (..., None):
                 continue

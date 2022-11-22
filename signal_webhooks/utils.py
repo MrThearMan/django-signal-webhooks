@@ -90,7 +90,7 @@ def get_webhookhook_model() -> Type["WebhookBase"]:
     from .models import WebhookBase  # pylint: disable=import-outside-toplevel
 
     if not issubclass(model, WebhookBase):
-        base_ref = f"{WebhookBase.__module__}.{WebhookBase.__name__}"
+        base_ref = reference_for_model(WebhookBase)
         raise ImproperlyConfigured(f"{ref!r} is not a subclass of a {base_ref!r}.")
 
     return model
