@@ -893,7 +893,7 @@ def test_webhook__single_webhook__disable_hooks_dont_fire(settings):
 
 
 @pytest.mark.django_db(transaction=True)
-def test_webhook__single_webhook__keep_reponse(settings):
+def test_webhook__single_webhook__keep_response(settings):
     settings.SIGNAL_WEBHOOKS = {
         "TASK_HANDLER": "signal_webhooks.handlers.sync_task_handler",
         "HOOKS": {
@@ -932,7 +932,7 @@ def test_webhook__single_webhook__keep_reponse(settings):
 
 
 @pytest.mark.django_db(transaction=True)
-def test_webhook__single_webhook__dont_keep_reponse(settings):
+def test_webhook__single_webhook__dont_keep_response(settings):
     settings.SIGNAL_WEBHOOKS = {
         "TASK_HANDLER": "signal_webhooks.handlers.sync_task_handler",
         "HOOKS": {
@@ -968,6 +968,45 @@ def test_webhook__single_webhook__dont_keep_reponse(settings):
     assert hook.last_success is not None
     assert hook.last_failure is None
     assert hook.last_response == ""
+
+
+@pytest.mark.django_db(transaction=True)
+def test_webhook__single_webhook__keep_response__failure(settings):
+    settings.SIGNAL_WEBHOOKS = {
+        "TASK_HANDLER": "signal_webhooks.handlers.sync_task_handler",
+        "HOOKS": {
+            "django.contrib.auth.models.User": ...,
+        },
+    }
+
+    Webhook.objects.create(
+        name="foo",
+        signal=SignalChoices.ALL,
+        ref="django.contrib.auth.models.User",
+        endpoint="http://www.example.com/",
+        keep_last_response=True,
+    )
+
+    user = User(
+        username="x",
+        email="user@user.com",
+        is_staff=True,
+        is_superuser=True,
+    )
+
+    resp = Response(400)
+    resp._content = b"bar"
+
+    with patch("signal_webhooks.handlers.httpx.AsyncClient.post", return_value=resp) as mock:
+        user.save()
+
+    mock.assert_called_once()
+
+    hook = Webhook.objects.get(name="foo")
+
+    assert hook.last_success is None
+    assert hook.last_failure is not None
+    assert hook.last_response == "bar"
 
 
 @pytest.mark.django_db(transaction=True)
@@ -1090,6 +1129,52 @@ def test_webhook__multiple_webhooks(settings):
 
     assert hook_2.last_success is not None
     assert hook_2.last_failure is None
+
+
+@pytest.mark.django_db(transaction=True)
+def test_webhook__multiple_webhooks__failure(settings):
+    settings.SIGNAL_WEBHOOKS = {
+        "TASK_HANDLER": "signal_webhooks.handlers.sync_task_handler",
+        "HOOKS": {
+            "django.contrib.auth.models.User": ...,
+        },
+    }
+
+    Webhook.objects.create(
+        name="foo",
+        signal=SignalChoices.ALL,
+        ref="django.contrib.auth.models.User",
+        endpoint="http://www.example.com/",
+    )
+
+    Webhook.objects.create(
+        name="bar",
+        signal=SignalChoices.ALL,
+        ref="django.contrib.auth.models.User",
+        endpoint="http://www.example1.com/",
+    )
+
+    user = User(
+        username="x",
+        email="user@user.com",
+        is_staff=True,
+        is_superuser=True,
+    )
+
+    with patch("signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(400)) as mock:
+        user.save()
+
+    mock.assert_called()
+    assert mock.call_count == 2
+
+    hook_1 = Webhook.objects.get(name="foo")
+    hook_2 = Webhook.objects.get(name="bar")
+
+    assert hook_1.last_success is None
+    assert hook_1.last_failure is not None
+
+    assert hook_2.last_success is None
+    assert hook_2.last_failure is not None
 
 
 @pytest.mark.django_db(transaction=True)

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "django-signal-webhooks"
-version = "0.2.0"
+version = "0.2.1"
 description = "Add webhooks to django using signals."
 authors = [
     "Matti Lamppu <lamppu.matti.akseli@gmail.com>",
@@ -52,7 +52,7 @@ Django = ">=3.1"
 asgiref = ">=3.5.0"
 httpx = ">=0.23.0"
 cryptography = ">=36.0.0"
-django-settings-holder = ">=0.0.4"
+django-settings-holder = ">=0.1.0"
 
 [tool.poetry.group.test.dependencies]
 pytest = "7.2.0"
@@ -171,10 +171,11 @@ deps =
     django40: Django>=4.0,<4.1
     django41: Django>=4.1,<4.2
 
-    asgiref
-    httpx
-    cryptography
-    django-settings-holder
+    asgiref>=3.5.0
+    httpx>=0.23.0
+    cryptography>=36.0.0
+    django-settings-holder>=0.1.0
+
     pytest
     pytest-django
     pytest-freezegun

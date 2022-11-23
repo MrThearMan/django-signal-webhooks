@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.test.signals import setting_changed
 from settings_holder import SettingsHolder, reload_settings
 
@@ -74,8 +73,6 @@ class DefaultSettings(NamedTuple):
 
 SETTING_NAME: str = "SIGNAL_WEBHOOKS"
 
-USER_SETTINGS: Optional[Dict[str, Any]] = getattr(settings, SETTING_NAME, None)
-
 DEFAULTS = DefaultSettings()._asdict()
 
 IMPORT_STRINGS: Set[Union[bytes, str]] = {
@@ -110,7 +107,7 @@ class WebhookSettingsHolder(SettingsHolder):
 
 
 webhook_settings = WebhookSettingsHolder(
-    user_settings=USER_SETTINGS,
+    setting_name=SETTING_NAME,
     defaults=DEFAULTS,
     import_strings=IMPORT_STRINGS,
     removed_settings=REMOVED_SETTINGS,
