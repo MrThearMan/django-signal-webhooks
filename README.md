@@ -47,7 +47,7 @@ SIGNAL_WEBHOOKS = {
 ```
 
 [coverage-badge]: https://coveralls.io/repos/github/MrThearMan/django-signal-webhooks/badge.svg?branch=main
-[status-badge]: https://img.shields.io/github/workflow/status/MrThearMan/django-signal-webhooks/Test
+[status-badge]: https://img.shields.io/github/actions/workflow/status/MrThearMan/django-signal-webhooks/test.yml?branch=main
 [pypi-badge]: https://img.shields.io/pypi/v/django-signal-webhooks
 [licence-badge]: https://img.shields.io/github/license/MrThearMan/django-signal-webhooks
 [repo-badge]: https://img.shields.io/github/last-commit/MrThearMan/django-signal-webhooks
