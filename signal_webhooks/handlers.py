@@ -46,7 +46,7 @@ logger = logging.getLogger(__name__)
 
 
 @receiver(signals.post_save, dispatch_uid=webhook_settings.DISPATCH_UID_POST_SAVE)
-def webhook_update_create_handler(sender: ModelBase, **kwargs) -> None:  # pylint: disable=unused-argument
+def webhook_update_create_handler(sender: ModelBase, **kwargs) -> None:
     kwargs: PostSaveData
     ref = reference_for_model(type(kwargs["instance"]))
 
@@ -84,7 +84,7 @@ def webhook_update_create_handler(sender: ModelBase, **kwargs) -> None:  # pylin
 
 
 @receiver(signals.post_delete, dispatch_uid=webhook_settings.DISPATCH_UID_POST_DELETE)
-def webhook_delete_handler(sender: ModelBase, **kwargs) -> None:  # pylint: disable=unused-argument
+def webhook_delete_handler(sender: ModelBase, **kwargs) -> None:
     kwargs: PostDeleteData
     ref = reference_for_model(type(kwargs["instance"]))
 
@@ -118,7 +118,7 @@ def webhook_delete_handler(sender: ModelBase, **kwargs) -> None:  # pylint: disa
     )
 
 
-def default_error_handler(hook: "Webhook", error: Optional[Exception]) -> None:  # pylint: disable=unused-argument
+def default_error_handler(hook: "Webhook", error: Optional[Exception]) -> None:
     """Default handler for errors from webhooks.
 
     :param hook: Hook that failed
@@ -187,7 +187,7 @@ async def fire_webhooks(hooks: QuerySet["Webhook"], method_data: Dict[int, Clien
 
             try:
                 response: httpx.Response = task.result()
-            except Exception as error:  # pylint: disable=broad-except
+            except Exception as error:
                 logger.exception(f"Webhook {hook.name!r} failed.", exc_info=error)
                 hook.last_failure = datetime.now(tz=timezone.utc)
                 webhook_settings.ERROR_HANDLER(hook, error)

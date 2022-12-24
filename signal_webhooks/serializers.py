@@ -19,13 +19,13 @@ class _WebhookSerializer(python.Serializer):
     def handle_m2m_field(self, obj: models.Model, field: models.Field) -> None:
         try:
             super().handle_m2m_field(obj, field)
-        except Exception as error:  # pragma: no cover pylint: disable=broad-except
+        except Exception as error:  # pragma: no cover
             logger.debug(f"Skip {field.name!r} during post-delete signal.", exc_info=error)
             self._current[field.name] = []  # type: ignore
 
     def end_serialization(self) -> None:
         # Convert any non-serializable objects to strings
-        self.objects = json.loads(json.dumps(self.objects[0], default=str))  # pylint: disable=W0201
+        self.objects = json.loads(json.dumps(self.objects[0], default=str))
 
 
 webhook_serializer = _WebhookSerializer()

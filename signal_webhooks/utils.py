@@ -53,12 +53,12 @@ def random_cipher_key(length: Literal[16, 24, 32] = 16) -> str:
 
 
 # 'value' as parameter so that can be used as a field validator
-def decode_cipher_key(value: str = "") -> bytes:  # pylint: disable=unused-argument
+def decode_cipher_key(value: str = "") -> bytes:
     try:
         return b64decode(webhook_settings.CIPHER_KEY)
     except TypeError as error:
         raise ValidationError("Cipher key not set.") from error
-    except Exception as error:  # pylint: disable=broad-except
+    except Exception as error:
         raise ValidationError("Invalid cipher key.") from error
 
 
@@ -69,7 +69,7 @@ def default_serializer(instance: Model) -> JSONData:
     return webhook_serializer.serialize([instance])
 
 
-def default_client_kwargs(hook: "Webhook") -> ClientMethodKwargs:  # pylint: disable=unused-argument
+def default_client_kwargs(hook: "Webhook") -> ClientMethodKwargs:
     return ClientMethodKwargs()
 
 
@@ -78,7 +78,7 @@ def get_webhookhook_model() -> Type["WebhookBase"]:
     ref = getattr(settings, "SIGNAL_WEBHOOKS_CUSTOM_MODEL", "signal_webhooks.models.Webhook")
 
     if ref == "signal_webhooks.models.Webhook":
-        from .models import Webhook  # pylint: disable=import-outside-toplevel
+        from .models import Webhook
 
         return Webhook
 
@@ -87,7 +87,7 @@ def get_webhookhook_model() -> Type["WebhookBase"]:
     except ValidationError as error:
         raise ImproperlyConfigured(f"{ref!r} is not a model that can be imported.") from error
 
-    from .models import WebhookBase  # pylint: disable=import-outside-toplevel
+    from .models import WebhookBase
 
     if not issubclass(model, WebhookBase):
         base_ref = reference_for_model(WebhookBase)
