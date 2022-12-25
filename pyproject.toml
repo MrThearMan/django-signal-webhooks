@@ -73,6 +73,7 @@ mkdocs-mermaid2-plugin = "0.6.0"
 [tool.poetry.group.lint.dependencies]
 mypy = "0.991"
 django-stubs = "1.13.0"
+djangorestframework-stubs = "1.8.0"
 
 [tool.poetry.extras]
 drf = ["djangorestframework"]
@@ -123,6 +124,7 @@ warn_return_any = "True"
 warn_unused_configs = "True"
 plugins = [
     "mypy_django_plugin.main",
+    "mypy_drf_plugin.main",
 ]
 
 [tool.coverage.run]
