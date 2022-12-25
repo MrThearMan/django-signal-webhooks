@@ -1,5 +1,6 @@
 import pytest
 from django.contrib.auth.models import User
+from rest_framework.test import APIClient
 from settings_holder import SettingsWrapper
 
 
@@ -33,6 +34,11 @@ def mock_user(django_db_blocker) -> User:
             is_staff=True,
             is_superuser=True,
         )
+
+
+@pytest.fixture()
+def api_client() -> APIClient:
+    return APIClient()
 
 
 def mock_hook(**kwargs):
