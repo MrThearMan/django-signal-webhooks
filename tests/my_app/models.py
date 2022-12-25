@@ -1,8 +1,6 @@
 from django.db import models
 
 from signal_webhooks.models import WebhookBase
-from signal_webhooks.typing import ClientMethodKwargs
-
 
 __all__ = [
     "MyModel",

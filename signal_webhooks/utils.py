@@ -15,7 +15,6 @@ from .serializers import webhook_serializer
 from .settings import webhook_settings
 from .typing import TYPE_CHECKING, Any, ClientMethodKwargs, Generator, JSONData, Literal, Set, Type
 
-
 if TYPE_CHECKING:
     from .models import Webhook, WebhookBase
 

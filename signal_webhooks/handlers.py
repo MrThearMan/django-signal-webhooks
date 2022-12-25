@@ -26,7 +26,6 @@ from .typing import (
 )
 from .utils import get_webhookhook_model, reference_for_model, tasks_as_completed, truncate
 
-
 if TYPE_CHECKING:
     from .models import Webhook
 

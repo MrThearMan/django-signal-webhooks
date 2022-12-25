@@ -7,7 +7,6 @@ from .fields import TokenField
 from .typing import Any, Dict, Optional, Sequence, SignalChoices
 from .utils import decode_cipher_key, is_dict, model_from_reference, reference_for_model
 
-
 __all__ = [
     "Webhook",
     "WebhookBase",

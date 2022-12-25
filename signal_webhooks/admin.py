@@ -7,7 +7,6 @@ from .settings import webhook_settings
 from .typing import Optional
 from .utils import get_webhookhook_model
 
-
 __all__ = [
     "WebhookModelForm",
     "WebhookAdmin",

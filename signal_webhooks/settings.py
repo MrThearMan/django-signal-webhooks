@@ -3,7 +3,6 @@ from settings_holder import SettingsHolder, reload_settings
 
 from .typing import Any, Dict, HooksData, Literal, NamedTuple, Optional, Set, Union
 
-
 __all__ = [
     "webhook_settings",
 ]

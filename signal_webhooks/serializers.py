@@ -4,7 +4,6 @@ import logging
 from django.core.serializers import python
 from django.db import models
 
-
 __all__ = [
     "webhook_serializer",
 ]

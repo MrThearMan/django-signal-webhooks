@@ -6,7 +6,6 @@ from signal_webhooks.models import Webhook
 from signal_webhooks.typing import SignalChoices
 from tests.my_app.models import MyModel
 
-
 ENDPOINT = "https://4b4e-194-137-1-169.eu.ngrok.io"
 
 

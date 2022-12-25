@@ -37,7 +37,6 @@ from httpx._types import (
     TimeoutTypes,
 )
 
-
 __all__ = [
     "Any",
     "Callable",

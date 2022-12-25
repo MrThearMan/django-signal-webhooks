@@ -9,7 +9,6 @@ from django.db import models
 
 from .utils import decode_cipher_key
 
-
 __all__ = [
     "TokenField",
 ]
