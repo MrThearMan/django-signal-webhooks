@@ -44,9 +44,9 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Set up poetry
-        uses: abatilo/actions-poetry@v2.1.6
+        uses: abatilo/actions-poetry@v2.2.0
         with:
-          poetry-version: "1.2.2"
+          poetry-version: "1.3.1"
 
       - name: Load cached venv
         id: cache-venv
@@ -59,10 +59,10 @@ jobs:
 
       - name: Install dependencies
         if: steps.cache-venv.outputs.cache-hit != 'true'
-        run: poetry install --no-root
+        run: poetry install --no-root -E drf
 
       - name: Install project
-        run: poetry install
+        run: poetry install -E drf
 
       - name: Run tox
         run: poetry run tox
@@ -84,9 +84,9 @@ jobs:
           python-version: "3.10"
 
       - name: Set up poetry
-        uses: abatilo/actions-poetry@v2.1.6
+        uses: abatilo/actions-poetry@v2.2.0
         with:
-          poetry-version: "1.2.2"
+          poetry-version: "1.3.1"
 
       - name: Load cached venv
         id: cache-venv
