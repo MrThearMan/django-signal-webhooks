@@ -56,23 +56,22 @@ django-settings-holder = ">=0.1.0"
 djangorestframework = { version = ">=3.13.0", optional = true}
 
 [tool.poetry.group.test.dependencies]
-pytest = "7.2.0"
+pytest = "7.2.1"
 coverage = "6.5.0"
 pytest-django = "4.5.2"
 pytest-freezegun = "0.4.2"
-pre-commit = "2.20.0"
-tox = "3.27.1"
-tox-gh-actions = "2.11.0"
+pre-commit = "3.0.1"
+tox = "4.4.2"
 coveralls = "3.3.1"
 
 [tool.poetry.group.docs.dependencies]
 mkdocs = "1.4.2"
-pymdown-extensions = "9.8"
+pymdown-extensions = "9.9.2"
 mkdocs-mermaid2-plugin = "0.6.0"
 
 [tool.poetry.group.lint.dependencies]
 mypy = "0.991"
-django-stubs = "1.13.0"
+django-stubs = "1.14.0"
 djangorestframework-stubs = "1.8.0"
 
 [tool.poetry.extras]
@@ -91,14 +90,11 @@ select = [
     "F",  # pyflakes
     "E",  # pycodestyle errors
     "I",  # isort
-    # "D",  # pydocstyle
-    # "N",  # pep8-naming
     "S",  # flake8-bandit
     "C",  # flake8-comprehensions
     "B",  # flake8-bugbear
     "T",  # flake8-print
     "W",  # pycodestyle warnings
-    # "ANN",  # flake8-annotations
 ]
 ignore = [
     "S101",  # assert is OK
@@ -158,15 +154,9 @@ legacy_tox_ini = """
 envlist = py{38, 39, 310, 311}-django{31, 32, 40, 41}
 isolated_build = true
 
-[gh-actions]
-python =
-    3.8: py38
-    3.9: py39
-    3.10: py310
-    3.11: py311
 
 [testenv]
-whitelist_externals =
+allowlist_externals =
     poetry
 setenv =
     PYTHONPATH = {toxinidir}
@@ -183,11 +173,12 @@ deps =
     djangorestframework>=3.13.0
 
     pytest
+    coverage
     pytest-django
     pytest-freezegun
 
 commands =
-    poetry run coverage run -m pytest -m "not e2e"
+    coverage run -m pytest -m "not e2e"
 """
 
 [build-system]
