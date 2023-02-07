@@ -8,6 +8,7 @@ from django.contrib.auth.models import Group, User
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from httpx import Response
 
+from signal_webhooks.exceptions import WebhookCancelled
 from signal_webhooks.models import Webhook
 from signal_webhooks.typing import SignalChoices
 from signal_webhooks.utils import get_webhookhook_model
@@ -515,6 +516,164 @@ def test_webhook__single_webhook__webhook_data(settings):
     hook = Webhook.objects.get(name="foo")
 
     assert hook.last_success is not None
+    assert hook.last_failure is None
+
+
+@pytest.mark.django_db(transaction=True)
+def test_webhook__single_webhook__webhook_data__cancel_webhook(settings, caplog):
+    settings.SIGNAL_WEBHOOKS = {
+        "TASK_HANDLER": "signal_webhooks.handlers.sync_task_handler",
+        "HOOKS": {
+            "tests.my_app.models.MyModel": ...,
+        },
+    }
+
+    response = Response(204)
+
+    Webhook.objects.create(
+        name="foo",
+        signal=SignalChoices.ALL,
+        ref="tests.my_app.models.MyModel",
+        endpoint="http://www.example.com/",
+    )
+
+    item = MyModel(name="x")
+
+    def func():
+        raise WebhookCancelled("Just because.")
+
+    method_1 = "signal_webhooks.handlers.httpx.AsyncClient.post"
+    method_2 = "tests.my_app.models.webhook_function"
+    # Sqlite cannot handle updating the Webhook after model delete
+    method_3 = "signal_webhooks.models.Webhook.objects.bulk_update"
+
+    with patch(method_1, return_value=response) as m1, patch(method_2, side_effect=func) as m2:
+        item.save()
+
+    m1.assert_not_called()
+    m2.assert_called_once()
+
+    assert len(caplog.messages) == 1
+    assert caplog.messages[0] == (
+        "Create webhook for 'tests.my_app.models.MyModel' cancelled before it was sent. Reason given: Just because."
+    )
+    caplog.clear()
+
+    hook = Webhook.objects.get(name="foo")
+
+    assert hook.last_success is None
+    assert hook.last_failure is None
+
+    item.name = "xx"
+    with patch(method_1, return_value=response) as m3, patch(method_2, side_effect=func) as m4:
+        item.save(update_fields=["name"])
+
+    assert len(caplog.messages) == 1
+    assert caplog.messages[0] == (
+        "Update webhook for 'tests.my_app.models.MyModel' cancelled before it was sent. Reason given: Just because."
+    )
+    caplog.clear()
+
+    m3.assert_not_called()
+    m4.assert_called_once()
+
+    hook = Webhook.objects.get(name="foo")
+
+    assert hook.last_success is None
+    assert hook.last_failure is None
+
+    with patch(method_1, return_value=response) as m5, patch(method_3) as m6, patch(method_2, side_effect=func) as m7:
+        item.delete()
+
+    assert len(caplog.messages) == 1
+    assert caplog.messages[0] == (
+        "Delete webhook for 'tests.my_app.models.MyModel' cancelled before it was sent. Reason given: Just because."
+    )
+    caplog.clear()
+
+    m5.assert_not_called()
+    m6.assert_not_called()
+    m7.assert_called_once()
+
+    hook = Webhook.objects.get(name="foo")
+
+    assert hook.last_success is None
+    assert hook.last_failure is None
+
+
+@pytest.mark.django_db(transaction=True)
+def test_webhook__single_webhook__webhook_data__data_fetching_failed(settings, caplog):
+    settings.SIGNAL_WEBHOOKS = {
+        "TASK_HANDLER": "signal_webhooks.handlers.sync_task_handler",
+        "HOOKS": {
+            "tests.my_app.models.MyModel": ...,
+        },
+    }
+
+    response = Response(204)
+
+    Webhook.objects.create(
+        name="foo",
+        signal=SignalChoices.ALL,
+        ref="tests.my_app.models.MyModel",
+        endpoint="http://www.example.com/",
+    )
+
+    item = MyModel(name="x")
+
+    def func():
+        raise Exception("foo")
+
+    method_1 = "signal_webhooks.handlers.httpx.AsyncClient.post"
+    method_2 = "tests.my_app.models.webhook_function"
+    # Sqlite cannot handle updating the Webhook after model delete
+    method_3 = "signal_webhooks.models.Webhook.objects.bulk_update"
+
+    with patch(method_1, return_value=response) as m1, patch(method_2, side_effect=func) as m2:
+        item.save()
+
+    m1.assert_not_called()
+    m2.assert_called_once()
+
+    assert len(caplog.messages) == 1
+    assert caplog.messages[0] == "Create webhook data for 'tests.my_app.models.MyModel' could not be created."
+    caplog.clear()
+
+    hook = Webhook.objects.get(name="foo")
+
+    assert hook.last_success is None
+    assert hook.last_failure is None
+
+    item.name = "xx"
+    with patch(method_1, return_value=response) as m3, patch(method_2, side_effect=func) as m4:
+        item.save(update_fields=["name"])
+
+    assert len(caplog.messages) == 1
+    assert caplog.messages[0] == "Update webhook data for 'tests.my_app.models.MyModel' could not be created."
+    caplog.clear()
+
+    m3.assert_not_called()
+    m4.assert_called_once()
+
+    hook = Webhook.objects.get(name="foo")
+
+    assert hook.last_success is None
+    assert hook.last_failure is None
+
+    with patch(method_1, return_value=response) as m5, patch(method_3) as m6, patch(method_2, side_effect=func) as m7:
+        item.delete()
+
+    assert len(caplog.messages) == 1
+    assert caplog.messages[0] == "Delete webhook data for 'tests.my_app.models.MyModel' could not be created."
+    caplog.clear()
+
+    m5.assert_not_called()
+    m6.assert_not_called()
+    m7.assert_called_once()
+
+    hook = Webhook.objects.get(name="foo")
+
+    assert hook.last_success is None
     assert hook.last_failure is None
 
 
@@ -1129,52 +1288,6 @@ def test_webhook__multiple_webhooks(settings):
 
     assert hook_2.last_success is not None
     assert hook_2.last_failure is None
-
-
-@pytest.mark.django_db(transaction=True)
-def test_webhook__multiple_webhooks__failure(settings):
-    settings.SIGNAL_WEBHOOKS = {
-        "TASK_HANDLER": "signal_webhooks.handlers.sync_task_handler",
-        "HOOKS": {
-            "django.contrib.auth.models.User": ...,
-        },
-    }
-
-    Webhook.objects.create(
-        name="foo",
-        signal=SignalChoices.ALL,
-        ref="django.contrib.auth.models.User",
-        endpoint="http://www.example.com/",
-    )
-
-    Webhook.objects.create(
-        name="bar",
-        signal=SignalChoices.ALL,
-        ref="django.contrib.auth.models.User",
-        endpoint="http://www.example1.com/",
-    )
-
-    user = User(
-        username="x",
-        email="user@user.com",
-        is_staff=True,
-        is_superuser=True,
-    )
-
-    with patch("signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(400)) as mock:
-        user.save()
-
-    mock.assert_called()
-    assert mock.call_count == 2
-
-    hook_1 = Webhook.objects.get(name="foo")
-    hook_2 = Webhook.objects.get(name="bar")
-
-    assert hook_1.last_success is None
-    assert hook_1.last_failure is not None
-
-    assert hook_2.last_success is None
-    assert hook_2.last_failure is not None
 
 
 @pytest.mark.django_db(transaction=True)

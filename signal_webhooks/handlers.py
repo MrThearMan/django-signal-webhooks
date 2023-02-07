@@ -2,7 +2,6 @@ import asyncio
 import logging
 from datetime import datetime, timezone
 from threading import Thread
-from typing import Any
 
 import httpx
 from asgiref.sync import sync_to_async
@@ -10,9 +9,11 @@ from django.db.models import QuerySet, signals
 from django.db.models.base import ModelBase
 from django.dispatch import receiver
 
+from .exceptions import WebhookCancelled
 from .settings import webhook_settings
 from .typing import (
     TYPE_CHECKING,
+    Any,
     Callable,
     ClientMethodKwargs,
     Dict,
@@ -49,37 +50,30 @@ def webhook_update_create_handler(sender: ModelBase, **kwargs) -> None:
     kwargs: PostSaveData
     ref = reference_for_model(type(kwargs["instance"]))
 
+    hook: Optional[Callable] = ...
     hooks: Optional[HooksData] = webhook_settings.HOOKS.get(ref)
+
     if hooks is None:
         return
-    if hooks is ...:
-        webhook_settings.TASK_HANDLER(
-            default_post_save_handler,
-            ref=ref,
-            data=webhook_settings.SERIALIZER(kwargs["instance"]),
-            created=kwargs["created"],
-        )
-        return
-
-    hook = hooks.get("CREATE") if kwargs["created"] else hooks.get("UPDATE")
-
+    if hooks is not ...:
+        hook = hooks.get("CREATE") if kwargs["created"] else hooks.get("UPDATE")
     if hook is None:
         return
     if hook is ...:
-        webhook_settings.TASK_HANDLER(
-            default_post_save_handler,
-            ref=ref,
-            data=webhook_settings.SERIALIZER(kwargs["instance"]),
-            created=kwargs["created"],
-        )
+        hook = default_post_save_handler
+
+    try:
+        data = webhook_settings.SERIALIZER(kwargs["instance"])
+    except WebhookCancelled as error:
+        method = "Create" if kwargs["created"] else "Update"
+        logger.info(f"{method} webhook for {ref!r} cancelled before it was sent. Reason given: {error}")
+        return
+    except Exception as error:
+        method = "Create" if kwargs["created"] else "Update"
+        logger.exception(f"{method} webhook data for {ref!r} could not be created.", exc_info=error)
         return
 
-    webhook_settings.TASK_HANDLER(
-        hook,
-        ref=ref,
-        data=webhook_settings.SERIALIZER(kwargs["instance"]),
-        created=kwargs["created"],
-    )
+    webhook_settings.TASK_HANDLER(hook, ref=ref, data=data, created=kwargs["created"])
 
 
 @receiver(signals.post_delete, dispatch_uid=webhook_settings.DISPATCH_UID_POST_DELETE)
@@ -87,34 +81,28 @@ def webhook_delete_handler(sender: ModelBase, **kwargs) -> None:
     kwargs: PostDeleteData
     ref = reference_for_model(type(kwargs["instance"]))
 
+    hook: Optional[Callable] = ...
     hooks: Optional[HooksData] = webhook_settings.HOOKS.get(ref)
+
     if hooks is None:
         return
-    if hooks is ...:
-        webhook_settings.TASK_HANDLER(
-            default_post_delete_handler,
-            ref=ref,
-            data=webhook_settings.SERIALIZER(kwargs["instance"]),
-        )
-        return
-
-    hook = hooks.get("DELETE")
-
+    if hooks is not ...:
+        hook = hooks.get("DELETE")
     if hook is None:
         return
     if hook is ...:
-        webhook_settings.TASK_HANDLER(
-            default_post_delete_handler,
-            ref=ref,
-            data=webhook_settings.SERIALIZER(kwargs["instance"]),
-        )
+        hook = default_post_delete_handler
+
+    try:
+        data = webhook_settings.SERIALIZER(kwargs["instance"])
+    except WebhookCancelled as error:
+        logger.info(f"Delete webhook for {ref!r} cancelled before it was sent. Reason given: {error}")
+        return
+    except Exception as error:
+        logger.exception(f"Delete webhook data for {ref!r} could not be created.", exc_info=error)
         return
 
-    webhook_settings.TASK_HANDLER(
-        hook,
-        ref=ref,
-        data=webhook_settings.SERIALIZER(kwargs["instance"]),
-    )
+    webhook_settings.TASK_HANDLER(hook, ref=ref, data=data)
 
 
 def default_error_handler(hook: "Webhook", error: Optional[Exception]) -> None:

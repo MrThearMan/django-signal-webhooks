@@ -8,13 +8,17 @@ __all__ = [
 ]
 
 
+def webhook_function():
+    return {"fizz": "buzz"}
+
+
 class MyModel(models.Model):
     """Testing model."""
 
     name = models.CharField(max_length=256)
 
     def webhook_data(self):
-        return {"fizz": "buzz"}
+        return webhook_function()
 
 
 class TestModel(models.Model):
