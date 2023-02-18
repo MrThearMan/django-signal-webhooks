@@ -40,7 +40,7 @@ from httpx._types import (
 __all__ = [
     "Any",
     "Callable",
-    "ClientMethodKwargs",
+    "ClientKwargs",
     "Coroutine",
     "Dict",
     "Generator",
@@ -50,10 +50,12 @@ __all__ = [
     "JSONValue",
     "List",
     "Literal",
+    "Method",
     "NamedTuple",
     "Optional",
     "PostDeleteData",
     "PostSaveData",
+    "Sequence",
     "Set",
     "SignalChoices",
     "Tuple",
@@ -61,7 +63,6 @@ __all__ = [
     "TYPE_CHECKING",
     "TypedDict",
     "Union",
-    "Sequence",
 ]
 
 
@@ -85,9 +86,10 @@ class PostDeleteData(TypedDict):
 
 JSONValue = Union[str, int, float, bool, None, Tuple["JSONValue"], List["JSONValue"], Dict[str, "JSONValue"]]
 JSONData = Union[List[Dict[str, JSONValue]], Dict[str, JSONValue]]
+Method = Literal["CREATE", "UPDATE", "DELETE"]  # noqa: F821
 
 
-class ClientMethodKwargs(TypedDict, total=False):
+class ClientKwargs(TypedDict, total=False):
     content: RequestContent
     data: RequestData
     files: RequestFiles
@@ -142,3 +144,10 @@ class SignalChoices(models.IntegerChoices):
             cls.UPDATE_OR_DELETE,
             cls.ALL,
         }
+
+
+METHOD_SIGNALS: Dict[Method, Set["SignalChoices"]] = {
+    "CREATE": SignalChoices.create_choises(),
+    "UPDATE": SignalChoices.update_choises(),
+    "DELETE": SignalChoices.delete_choises(),
+}

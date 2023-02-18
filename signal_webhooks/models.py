@@ -1,10 +1,11 @@
 from datetime import datetime
 
 from django.db import models
-from django.db.models.base import ModelBase
+from django.db.models import Model
 
 from .fields import TokenField
-from .typing import Any, Dict, Optional, Sequence, SignalChoices
+from .settings import webhook_settings
+from .typing import METHOD_SIGNALS, Any, Dict, Method, Optional, SignalChoices
 from .utils import decode_cipher_key, is_dict, model_from_reference, reference_for_model
 
 __all__ = [
@@ -16,11 +17,14 @@ __all__ = [
 class WebhookQuerySet(models.QuerySet["Webhook"]):
     """Webhook queryset."""
 
-    def get_for_ref(self, ref: str, signals: Sequence[SignalChoices]) -> models.QuerySet["Webhook"]:
-        return self.filter(ref=ref, signal__in=signals, enabled=True)
-
-    def get_for_model(self, model: ModelBase, signals: Sequence[SignalChoices]) -> models.QuerySet["Webhook"]:
-        return self.get_for_ref(reference_for_model(model), signals)  # pragma: no cover
+    def get_for_model(self, instance: Model, method: Method) -> models.QuerySet["Webhook"]:
+        kwargs: Dict[str, Any] = webhook_settings.FILTER_KWARGS(instance, method)
+        return self.filter(
+            ref=reference_for_model(type(instance)),
+            signal__in=METHOD_SIGNALS[method],
+            enabled=True,
+            **kwargs,
+        )
 
 
 class WebhookBase(models.Model):

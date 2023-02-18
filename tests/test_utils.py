@@ -18,7 +18,6 @@ from tests.my_app.models import MyModel
 
 
 def test_model_from_reference(settings):
-
     settings.SIGNAL_WEBHOOKS = {
         "TASK_HANDLER": "signal_webhooks.handlers.sync_task_handler",
         "HOOKS": {
@@ -32,7 +31,6 @@ def test_model_from_reference(settings):
 
 
 def test_model_from_reference__not_a_dot_import(settings):
-
     settings.SIGNAL_WEBHOOKS = {
         "TASK_HANDLER": "signal_webhooks.handlers.sync_task_handler",
         "HOOKS": {
@@ -47,7 +45,6 @@ def test_model_from_reference__not_a_dot_import(settings):
 
 
 def test_model_from_reference__does_no_define_given_value(settings):
-
     settings.SIGNAL_WEBHOOKS = {
         "TASK_HANDLER": "signal_webhooks.handlers.sync_task_handler",
         "HOOKS": {
@@ -65,7 +62,6 @@ def test_model_from_reference__does_no_define_given_value(settings):
 
 
 def test_model_from_reference__not_a_model(settings):
-
     settings.SIGNAL_WEBHOOKS = {
         "TASK_HANDLER": "signal_webhooks.handlers.sync_task_handler",
         "HOOKS": {
@@ -80,7 +76,6 @@ def test_model_from_reference__not_a_model(settings):
 
 
 def test_model_from_reference__webhooks_not_defined(settings):
-
     settings.SIGNAL_WEBHOOKS = {
         "TASK_HANDLER": "signal_webhooks.handlers.sync_task_handler",
         "HOOKS": {

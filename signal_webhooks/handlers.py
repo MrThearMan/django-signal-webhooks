@@ -5,7 +5,7 @@ from threading import Thread
 
 import httpx
 from asgiref.sync import sync_to_async
-from django.db.models import QuerySet, signals
+from django.db.models import Model, QuerySet, signals
 from django.db.models.base import ModelBase
 from django.dispatch import receiver
 
@@ -15,15 +15,15 @@ from .typing import (
     TYPE_CHECKING,
     Any,
     Callable,
-    ClientMethodKwargs,
+    ClientKwargs,
     Dict,
     HooksData,
     JSONData,
+    Method,
     Optional,
     PostDeleteData,
     PostSaveData,
     Set,
-    SignalChoices,
 )
 from .utils import get_webhookhook_model, reference_for_model, tasks_as_completed, truncate
 
@@ -33,8 +33,7 @@ if TYPE_CHECKING:
 
 __all__ = [
     "default_error_handler",
-    "default_post_delete_handler",
-    "default_post_save_handler",
+    "default_hook_handler",
     "sync_task_handler",
     "thread_task_handler",
     "webhook_delete_handler",
@@ -48,61 +47,48 @@ logger = logging.getLogger(__name__)
 @receiver(signals.post_save, dispatch_uid=webhook_settings.DISPATCH_UID_POST_SAVE)
 def webhook_update_create_handler(sender: ModelBase, **kwargs) -> None:
     kwargs: PostSaveData
-    ref = reference_for_model(type(kwargs["instance"]))
-
-    hook: Optional[Callable] = ...
-    hooks: Optional[HooksData] = webhook_settings.HOOKS.get(ref)
-
-    if hooks is None:
-        return
-    if hooks is not ...:
-        hook = hooks.get("CREATE") if kwargs["created"] else hooks.get("UPDATE")
-    if hook is None:
-        return
-    if hook is ...:
-        hook = default_post_save_handler
-
-    try:
-        data = webhook_settings.SERIALIZER(kwargs["instance"])
-    except WebhookCancelled as error:
-        method = "Create" if kwargs["created"] else "Update"
-        logger.info(f"{method} webhook for {ref!r} cancelled before it was sent. Reason given: {error}")
-        return
-    except Exception as error:
-        method = "Create" if kwargs["created"] else "Update"
-        logger.exception(f"{method} webhook data for {ref!r} could not be created.", exc_info=error)
-        return
-
-    webhook_settings.TASK_HANDLER(hook, ref=ref, data=data, created=kwargs["created"])
+    webhook_handler(instance=kwargs["instance"], method="CREATE" if kwargs["created"] else "UPDATE")  # type: ignore
 
 
 @receiver(signals.post_delete, dispatch_uid=webhook_settings.DISPATCH_UID_POST_DELETE)
 def webhook_delete_handler(sender: ModelBase, **kwargs) -> None:
     kwargs: PostDeleteData
-    ref = reference_for_model(type(kwargs["instance"]))
+    webhook_handler(instance=kwargs["instance"], method="DELETE")
 
+
+def webhook_handler(instance: Model, method: Method) -> None:
+    ref = reference_for_model(type(instance))
+
+    hook = find_hook_handler(ref, method)
+    if hook is None:
+        return
+
+    try:
+        data = webhook_settings.SERIALIZER(instance)
+    except WebhookCancelled as error:
+        logger.info(f"{method.capitalize()} webhook for {ref!r} cancelled before it was sent. Reason given: {error}")
+        return
+    except Exception as error:
+        logger.exception(f"{method.capitalize()} webhook data for {ref!r} could not be created.", exc_info=error)
+        return
+
+    webhook_settings.TASK_HANDLER(hook, instance=instance, data=data, method=method)
+
+
+def find_hook_handler(ref: str, method: Method) -> Optional[Callable]:
     hook: Optional[Callable] = ...
     hooks: Optional[HooksData] = webhook_settings.HOOKS.get(ref)
 
     if hooks is None:
-        return
+        return None
     if hooks is not ...:
-        hook = hooks.get("DELETE")
+        hook = hooks.get(method)  # type: ignore
     if hook is None:
-        return
+        return None
     if hook is ...:
-        hook = default_post_delete_handler
+        hook = default_hook_handler
 
-    try:
-        data = webhook_settings.SERIALIZER(kwargs["instance"])
-    except WebhookCancelled as error:
-        logger.info(f"Delete webhook for {ref!r} cancelled before it was sent. Reason given: {error}")
-        return
-    except Exception as error:
-        logger.exception(f"Delete webhook data for {ref!r} could not be created.", exc_info=error)
-        return
-
-    webhook_settings.TASK_HANDLER(hook, ref=ref, data=data)
+    return hook
 
 
 def default_error_handler(hook: "Webhook", error: Optional[Exception]) -> None:
@@ -122,52 +108,32 @@ def sync_task_handler(hook: Callable[..., None], **kwargs: Any) -> None:
     hook(**kwargs)
 
 
-def default_post_save_handler(ref: str, data: JSONData, created: bool) -> None:
-    webhook_model = get_webhookhook_model()
-
-    signal_types = SignalChoices.create_choises() if created else SignalChoices.update_choises()
-    hooks = webhook_model.objects.get_for_ref(ref, signals=signal_types)
-
+def default_hook_handler(instance: Model, data: JSONData, method: Method) -> None:
+    hooks: QuerySet["Webhook"] = get_webhookhook_model().objects.get_for_model(instance, method=method)
     if not hooks.exists():
         return
 
-    method_data: Dict[int, ClientMethodKwargs] = {}
+    client_kwargs = build_client_kwargs_by_hook_id(hooks)
+    asyncio.run(fire_webhooks(hooks, data, client_kwargs))
+
+
+def build_client_kwargs_by_hook_id(hooks: QuerySet["Webhook"]) -> Dict[int, ClientKwargs]:
+    client_kwargs_by_hook_id: Dict[int, ClientKwargs] = {}
     for hook in hooks:
-        method_data[hook.id] = webhook_settings.CLIENT_KWARGS(hook)
-        method_data[hook.id].setdefault("headers", {})
-        method_data[hook.id]["headers"].update(hook.default_headers())
-        method_data[hook.id]["json"] = data
-
-    asyncio.run(fire_webhooks(hooks, method_data))
+        client_kwargs_by_hook_id[hook.id] = webhook_settings.CLIENT_KWARGS(hook)
+        client_kwargs_by_hook_id[hook.id].setdefault("headers", {})
+        client_kwargs_by_hook_id[hook.id]["headers"].update(hook.default_headers())
+    return client_kwargs_by_hook_id
 
 
-def default_post_delete_handler(ref: str, data: JSONData) -> None:
-    webhook_model = get_webhookhook_model()
-
-    signal_types = SignalChoices.delete_choises()
-    hooks = webhook_model.objects.get_for_ref(ref, signals=signal_types)
-
-    if not hooks.exists():
-        return
-
-    method_data: Dict[int, ClientMethodKwargs] = {}
-    for hook in hooks:
-        method_data[hook.id] = webhook_settings.CLIENT_KWARGS(hook)
-        method_data[hook.id].setdefault("headers", {})
-        method_data[hook.id]["headers"].update(hook.default_headers())
-        method_data[hook.id]["json"] = data
-
-    asyncio.run(fire_webhooks(hooks, method_data))
-
-
-async def fire_webhooks(hooks: QuerySet["Webhook"], method_data: Dict[int, ClientMethodKwargs]) -> None:
+async def fire_webhooks(hooks: QuerySet["Webhook"], data: JSONData, client_kwargs: Dict[int, ClientKwargs]) -> None:
     futures: Set[asyncio.Task] = set()
     hooks_by_name: Dict[str, "Webhook"] = {hook.name: hook for hook in hooks}
     webhook_model = get_webhookhook_model()
 
     async with httpx.AsyncClient(timeout=webhook_settings.TIMEOUT, follow_redirects=True) as client:
         for hook in hooks:
-            futures.add(asyncio.Task(client.post(hook.endpoint, **method_data[hook.id]), name=hook.name))
+            futures.add(asyncio.Task(client.post(hook.endpoint, json=data, **client_kwargs[hook.id]), name=hook.name))
 
         async for task in tasks_as_completed(futures):
             hook = hooks_by_name[task.get_name()]

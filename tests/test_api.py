@@ -50,7 +50,7 @@ def test_webhook_api(settings, api_client: APIClient):
         is_superuser=True,
     )
 
-    with patch("signal_webhooks.handlers.default_post_save_handler") as mock_1:
+    with patch("signal_webhooks.handlers.default_hook_handler") as mock_1:
         user.save()
 
     mock_1.assert_called_once()

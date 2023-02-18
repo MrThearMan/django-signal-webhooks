@@ -13,7 +13,7 @@ from django.db.models.base import ModelBase
 
 from .serializers import webhook_serializer
 from .settings import webhook_settings
-from .typing import TYPE_CHECKING, Any, ClientMethodKwargs, Generator, JSONData, Literal, Set, Type
+from .typing import TYPE_CHECKING, Any, ClientKwargs, Dict, Generator, JSONData, Literal, Method, Set, Type
 
 if TYPE_CHECKING:
     from .models import Webhook, WebhookBase
@@ -68,8 +68,12 @@ def default_serializer(instance: Model) -> JSONData:
     return webhook_serializer.serialize([instance])
 
 
-def default_client_kwargs(hook: "Webhook") -> ClientMethodKwargs:
-    return ClientMethodKwargs()
+def default_client_kwargs(hook: "Webhook") -> ClientKwargs:
+    return ClientKwargs()
+
+
+def default_filter_kwargs(instance: Model, method: Method) -> Dict[str, Any]:
+    return {}
 
 
 @lru_cache(maxsize=None)

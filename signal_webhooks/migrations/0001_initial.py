@@ -7,7 +7,6 @@ import signal_webhooks.utils
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = []

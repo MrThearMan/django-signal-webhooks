@@ -1,7 +1,7 @@
 from django.test.signals import setting_changed
 from settings_holder import SettingsHolder, reload_settings
 
-from .typing import Any, Dict, HooksData, Literal, NamedTuple, Optional, Set, Union
+from .typing import Any, Dict, HooksData, Method, NamedTuple, Optional, Set, Union
 
 __all__ = [
     "webhook_settings",
@@ -43,12 +43,18 @@ class DefaultSettings(NamedTuple):
     # data matching 'signal_webhooks.typing.JSONData'.
     SERIALIZER: str = "signal_webhooks.utils.default_serializer"
     #
-    # Default argument builder function for the http client that sends the webhooks.
+    # Hook for adding additional arguments for the http client that sends the webhooks.
     # Takes these arguments (hook: Webhook), and should return data matching
-    # 'signal_webhooks.typing.ClientMethodKwargs'. Data from 'SERIALIZER' will be
-    # added to the 'json' argument and headers from the hook will be updated
-    # to the 'headers' argument.
+    # 'signal_webhooks.typing.ClientKwargs'. Note that the headers from the hook will be
+    # updated to the 'headers' argument, and the data sent by the webhook will be in json form.
     CLIENT_KWARGS: str = "signal_webhooks.utils.default_client_kwargs"
+    #
+    # Hook for adding additional filtering to the database query when selecting hooks to fire.
+    # Takes these arguments (instance: Model, method: Literal['CREATE', 'UPDATE', 'DELETE']),
+    # and should return a dict with the additional arguments passed to 'QuerySet.filter()'.
+    # See 'signal_webhooks.models.WebhookQuerySet.get_for_model' for the filtering arguments
+    # that are already added by default.
+    FILTER_KWARGS: str = "signal_webhooks.utils.default_filter_kwargs"
     #
     # Error handing function that will be called if a webhook fails. Takes these
     # arguments (hook: Webhook, error: Optional[Exception]) and returns None.
@@ -78,6 +84,7 @@ IMPORT_STRINGS: Set[Union[bytes, str]] = {
     "HOOKS",
     "SERIALIZER",
     "CLIENT_KWARGS",
+    "FILTER_KWARGS",
     "ERROR_HANDLER",
     "TASK_HANDLER",
 }
@@ -91,7 +98,7 @@ class WebhookSettingsHolder(SettingsHolder):
             return super().perform_import(val, setting)  # pragma: no cover
 
         val: Dict[str, HooksData]
-        method: Literal["CREATE", "UPDATE", "DELETE"]  # noqa: F821
+        method: Method
         for model_path, webhooks in val.items():
             if webhooks in (..., None):
                 continue

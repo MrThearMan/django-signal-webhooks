@@ -31,38 +31,38 @@ def test_webhook__default_setup(settings):
         is_superuser=True,
     )
 
-    with patch("signal_webhooks.handlers.default_post_save_handler") as mock_1:
+    with patch("signal_webhooks.handlers.default_hook_handler") as mock_1:
         user.save()
 
     mock_1.assert_called_once()
 
     user.username = "xx"
 
-    with patch("signal_webhooks.handlers.default_post_save_handler") as mock_2:
+    with patch("signal_webhooks.handlers.default_hook_handler") as mock_2:
         user.save(update_fields=["username"])
 
     mock_2.assert_called_once()
 
-    with patch("signal_webhooks.handlers.default_post_delete_handler") as mock_3:
+    with patch("signal_webhooks.handlers.default_hook_handler") as mock_3:
         user.delete()
 
     mock_3.assert_called_once()
 
     group = Group(name="x")
 
-    with patch("signal_webhooks.handlers.default_post_save_handler") as mock_4:
+    with patch("signal_webhooks.handlers.default_hook_handler") as mock_4:
         group.save()
 
     mock_4.assert_not_called()
 
     group.name = "xx"
 
-    with patch("signal_webhooks.handlers.default_post_save_handler") as mock_5:
+    with patch("signal_webhooks.handlers.default_hook_handler") as mock_5:
         group.save(update_fields=["name"])
 
     mock_5.assert_not_called()
 
-    with patch("signal_webhooks.handlers.default_post_delete_handler") as mock_6:
+    with patch("signal_webhooks.handlers.default_hook_handler") as mock_6:
         group.delete()
 
     mock_6.assert_not_called()
@@ -84,19 +84,19 @@ def test_webhook__default_setup__expicit_deny(settings):
         is_superuser=True,
     )
 
-    with patch("signal_webhooks.handlers.default_post_save_handler") as mock_1:
+    with patch("signal_webhooks.handlers.default_hook_handler") as mock_1:
         user.save()
 
     mock_1.assert_not_called()
 
     user.username = "xx"
 
-    with patch("signal_webhooks.handlers.default_post_save_handler") as mock_2:
+    with patch("signal_webhooks.handlers.default_hook_handler") as mock_2:
         user.save(update_fields=["username"])
 
     mock_2.assert_not_called()
 
-    with patch("signal_webhooks.handlers.default_post_delete_handler") as mock_3:
+    with patch("signal_webhooks.handlers.default_hook_handler") as mock_3:
         user.delete()
 
     mock_3.assert_not_called()
@@ -104,7 +104,6 @@ def test_webhook__default_setup__expicit_deny(settings):
 
 @pytest.mark.django_db
 def test_webhook__default_setup__for_methods(settings):
-
     settings.SIGNAL_WEBHOOKS = {
         "TASK_HANDLER": "signal_webhooks.handlers.sync_task_handler",
         "HOOKS": {
@@ -123,19 +122,19 @@ def test_webhook__default_setup__for_methods(settings):
         is_superuser=True,
     )
 
-    with patch("signal_webhooks.handlers.default_post_save_handler") as mock_1:
+    with patch("signal_webhooks.handlers.default_hook_handler") as mock_1:
         user.save()
 
     mock_1.assert_called_once()
 
     user.username = "xx"
 
-    with patch("signal_webhooks.handlers.default_post_save_handler") as mock_2:
+    with patch("signal_webhooks.handlers.default_hook_handler") as mock_2:
         user.save(update_fields=["username"])
 
     mock_2.assert_called_once()
 
-    with patch("signal_webhooks.handlers.default_post_delete_handler") as mock_3:
+    with patch("signal_webhooks.handlers.default_hook_handler") as mock_3:
         user.delete()
 
     mock_3.assert_called_once()
@@ -143,7 +142,6 @@ def test_webhook__default_setup__for_methods(settings):
 
 @pytest.mark.django_db
 def test_webhook__default_setup__for_methods__not_defined(settings):
-
     settings.SIGNAL_WEBHOOKS = {
         "TASK_HANDLER": "signal_webhooks.handlers.sync_task_handler",
         "HOOKS": {
@@ -158,19 +156,19 @@ def test_webhook__default_setup__for_methods__not_defined(settings):
         is_superuser=True,
     )
 
-    with patch("signal_webhooks.handlers.default_post_save_handler") as mock_1:
+    with patch("signal_webhooks.handlers.default_hook_handler") as mock_1:
         user.save()
 
     mock_1.assert_not_called()
 
     user.username = "xx"
 
-    with patch("signal_webhooks.handlers.default_post_save_handler") as mock_2:
+    with patch("signal_webhooks.handlers.default_hook_handler") as mock_2:
         user.save(update_fields=["username"])
 
     mock_2.assert_not_called()
 
-    with patch("signal_webhooks.handlers.default_post_delete_handler") as mock_3:
+    with patch("signal_webhooks.handlers.default_hook_handler") as mock_3:
         user.delete()
 
     mock_3.assert_not_called()
@@ -178,7 +176,6 @@ def test_webhook__default_setup__for_methods__not_defined(settings):
 
 @pytest.mark.django_db
 def test_webhook__default_setup__for_methods__set_none(settings):
-
     settings.SIGNAL_WEBHOOKS = {
         "TASK_HANDLER": "signal_webhooks.handlers.sync_task_handler",
         "HOOKS": {
@@ -197,19 +194,19 @@ def test_webhook__default_setup__for_methods__set_none(settings):
         is_superuser=True,
     )
 
-    with patch("signal_webhooks.handlers.default_post_save_handler") as mock_1:
+    with patch("signal_webhooks.handlers.default_hook_handler") as mock_1:
         user.save()
 
     mock_1.assert_not_called()
 
     user.username = "xx"
 
-    with patch("signal_webhooks.handlers.default_post_save_handler") as mock_2:
+    with patch("signal_webhooks.handlers.default_hook_handler") as mock_2:
         user.save(update_fields=["username"])
 
     mock_2.assert_not_called()
 
-    with patch("signal_webhooks.handlers.default_post_delete_handler") as mock_3:
+    with patch("signal_webhooks.handlers.default_hook_handler") as mock_3:
         user.delete()
 
     mock_3.assert_not_called()
@@ -217,7 +214,6 @@ def test_webhook__default_setup__for_methods__set_none(settings):
 
 @pytest.mark.django_db
 def test_webhook__custom_setup(settings):
-
     settings.SIGNAL_WEBHOOKS = {
         "TASK_HANDLER": "signal_webhooks.handlers.sync_task_handler",
         "HOOKS": {
