@@ -21,6 +21,8 @@ pip install django-signal-webhooks
 
 **Source Code**: [https://github.com/MrThearMan/django-signal-webhooks/](https://github.com/MrThearMan/django-signal-webhooks/)
 
+**Contributing**: [https://github.com/MrThearMan/django-signal-webhooks/blob/main/CONTRIBUTING.md](https://github.com/MrThearMan/django-signal-webhooks/blob/main/CONTRIBUTING.md)
+
 ---
 
 This library enables you to add webhooks to a Django project for any create/update/delete
