@@ -1,18 +1,11 @@
+from collections.abc import Callable, Coroutine, Generator, Iterator, Mapping, Sequence
 from typing import (
-    TYPE_CHECKING,
     Any,
-    Callable,
-    Coroutine,
     Dict,
-    FrozenSet,
-    Generator,
-    Iterator,
     List,
     Literal,
-    Mapping,
     NamedTuple,
     Optional,
-    Sequence,
     Set,
     Tuple,
     Type,
@@ -60,7 +53,6 @@ __all__ = [
     "SignalChoices",
     "Tuple",
     "Type",
-    "TYPE_CHECKING",
     "TypedDict",
     "Union",
 ]
@@ -72,7 +64,7 @@ class PostSaveData(TypedDict):
     created: bool
     raw: bool
     using: str  # database name
-    update_fields: Optional[FrozenSet[str]]
+    update_fields: Union[frozenset[str], None]
 
 
 class PostDeleteData(TypedDict):
@@ -84,9 +76,18 @@ class PostDeleteData(TypedDict):
         origin: Union[Model, QuerySet]
 
 
-JSONValue = Union[str, int, float, bool, None, Tuple["JSONValue"], List["JSONValue"], Dict[str, "JSONValue"]]
-JSONData = Union[List[Dict[str, JSONValue]], Dict[str, JSONValue]]
-Method = Literal["CREATE", "UPDATE", "DELETE"]  # noqa: F821
+JSONValue = Union[
+    str,
+    int,
+    float,
+    bool,
+    None,
+    tuple["JSONValue"],
+    list["JSONValue"],
+    dict[str, "JSONValue"],
+]
+JSONData = Union[list[dict[str, JSONValue]], dict[str, JSONValue]]
+Method = Literal["CREATE", "UPDATE", "DELETE"]
 
 
 class ClientKwargs(TypedDict, total=False):
@@ -119,7 +120,7 @@ class SignalChoices(models.IntegerChoices):
     ALL = 6, "ALL"
 
     @classmethod
-    def create_choises(cls) -> Set["SignalChoices"]:
+    def create_choises(cls) -> set["SignalChoices"]:
         return {
             cls.CREATE,
             cls.CREATE_OR_UPDATE,
@@ -128,7 +129,7 @@ class SignalChoices(models.IntegerChoices):
         }
 
     @classmethod
-    def update_choises(cls) -> Set["SignalChoices"]:
+    def update_choises(cls) -> set["SignalChoices"]:
         return {
             cls.UPDATE,
             cls.CREATE_OR_UPDATE,
@@ -137,7 +138,7 @@ class SignalChoices(models.IntegerChoices):
         }
 
     @classmethod
-    def delete_choises(cls) -> Set["SignalChoices"]:
+    def delete_choises(cls) -> set["SignalChoices"]:
         return {
             cls.DELETE,
             cls.CREATE_OR_DELETE,
@@ -146,7 +147,7 @@ class SignalChoices(models.IntegerChoices):
         }
 
 
-METHOD_SIGNALS: Dict[Method, Set["SignalChoices"]] = {
+METHOD_SIGNALS: dict[Method, set[SignalChoices]] = {
     "CREATE": SignalChoices.create_choises(),
     "UPDATE": SignalChoices.update_choises(),
     "DELETE": SignalChoices.delete_choises(),

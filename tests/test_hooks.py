@@ -277,7 +277,9 @@ def test_webhook__cannot_create_hook_if_settings_missing(settings):
         endpoint="http://www.example.com/",
     )
 
-    msg = r"""{'ref': ["Webhooks not defined for 'django.contrib.auth.models.User'."]}"""
+    msg = (
+        r"""{'ref': ["Webhooks not defined for 'django.contrib.auth.models.User'."]}"""
+    )
 
     with pytest.raises(ValidationError, match=re.escape(msg)):
         hook.full_clean(exclude=["last_failure", "last_success"])
@@ -306,14 +308,18 @@ def test_webhook__single_webhook(settings):
         is_superuser=True,
     )
 
-    with patch("signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)) as mock_1:
+    with patch(
+        "signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)
+    ) as mock_1:
         user.save()
 
     mock_1.assert_called_once()
 
     user.username = "xx"
 
-    with patch("signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)) as mock_2:
+    with patch(
+        "signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)
+    ) as mock_2:
         user.save(update_fields=["username"])
 
     mock_2.assert_called_once()
@@ -347,7 +353,9 @@ def test_webhook__single_webhook__failure(settings):
         is_superuser=True,
     )
 
-    with patch("signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(400)) as mock:
+    with patch(
+        "signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(400)
+    ) as mock:
         user.save()
 
     mock.assert_called_once()
@@ -383,7 +391,9 @@ def test_webhook__single_webhook__authenticated(settings):
         is_superuser=True,
     )
 
-    with patch("signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)) as mock:
+    with patch(
+        "signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)
+    ) as mock:
         user.save()
 
     mock.assert_called_once()
@@ -417,7 +427,9 @@ def test_webhook__single_webhook__different_model(settings):
         is_superuser=True,
     )
 
-    with patch("signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)) as mock:
+    with patch(
+        "signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)
+    ) as mock:
         user.save()
 
     mock.assert_not_called()
@@ -500,7 +512,9 @@ def test_webhook__single_webhook__webhook_data(settings):
 
     item = MyModel(name="x")
 
-    with patch("signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)) as mock_1:
+    with patch(
+        "signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)
+    ) as mock_1:
         item.save()
 
     mock_1.assert_called_once_with(
@@ -543,7 +557,9 @@ def test_webhook__single_webhook__webhook_data__cancel_webhook(settings, caplog)
     # Sqlite cannot handle updating the Webhook after model delete
     method_3 = "signal_webhooks.models.Webhook.objects.bulk_update"
 
-    with patch(method_1, return_value=response) as m1, patch(method_2, side_effect=func) as m2:
+    with patch(method_1, return_value=response) as m1, patch(
+        method_2, side_effect=func
+    ) as m2:
         item.save()
 
     m1.assert_not_called()
@@ -561,7 +577,9 @@ def test_webhook__single_webhook__webhook_data__cancel_webhook(settings, caplog)
     assert hook.last_failure is None
 
     item.name = "xx"
-    with patch(method_1, return_value=response) as m3, patch(method_2, side_effect=func) as m4:
+    with patch(method_1, return_value=response) as m3, patch(
+        method_2, side_effect=func
+    ) as m4:
         item.save(update_fields=["name"])
 
     assert len(caplog.messages) == 1
@@ -578,7 +596,9 @@ def test_webhook__single_webhook__webhook_data__cancel_webhook(settings, caplog)
     assert hook.last_success is None
     assert hook.last_failure is None
 
-    with patch(method_1, return_value=response) as m5, patch(method_3) as m6, patch(method_2, side_effect=func) as m7:
+    with patch(method_1, return_value=response) as m5, patch(method_3) as m6, patch(
+        method_2, side_effect=func
+    ) as m7:
         item.delete()
 
     assert len(caplog.messages) == 1
@@ -625,14 +645,19 @@ def test_webhook__single_webhook__webhook_data__data_fetching_failed(settings, c
     # Sqlite cannot handle updating the Webhook after model delete
     method_3 = "signal_webhooks.models.Webhook.objects.bulk_update"
 
-    with patch(method_1, return_value=response) as m1, patch(method_2, side_effect=func) as m2:
+    with patch(method_1, return_value=response) as m1, patch(
+        method_2, side_effect=func
+    ) as m2:
         item.save()
 
     m1.assert_not_called()
     m2.assert_called_once()
 
     assert len(caplog.messages) == 1
-    assert caplog.messages[0] == "Create webhook data for 'tests.my_app.models.MyModel' could not be created."
+    assert (
+        caplog.messages[0]
+        == "Create webhook data for 'tests.my_app.models.MyModel' could not be created."
+    )
     caplog.clear()
 
     hook = Webhook.objects.get(name="foo")
@@ -641,11 +666,16 @@ def test_webhook__single_webhook__webhook_data__data_fetching_failed(settings, c
     assert hook.last_failure is None
 
     item.name = "xx"
-    with patch(method_1, return_value=response) as m3, patch(method_2, side_effect=func) as m4:
+    with patch(method_1, return_value=response) as m3, patch(
+        method_2, side_effect=func
+    ) as m4:
         item.save(update_fields=["name"])
 
     assert len(caplog.messages) == 1
-    assert caplog.messages[0] == "Update webhook data for 'tests.my_app.models.MyModel' could not be created."
+    assert (
+        caplog.messages[0]
+        == "Update webhook data for 'tests.my_app.models.MyModel' could not be created."
+    )
     caplog.clear()
 
     m3.assert_not_called()
@@ -656,11 +686,16 @@ def test_webhook__single_webhook__webhook_data__data_fetching_failed(settings, c
     assert hook.last_success is None
     assert hook.last_failure is None
 
-    with patch(method_1, return_value=response) as m5, patch(method_3) as m6, patch(method_2, side_effect=func) as m7:
+    with patch(method_1, return_value=response) as m5, patch(method_3) as m6, patch(
+        method_2, side_effect=func
+    ) as m7:
         item.delete()
 
     assert len(caplog.messages) == 1
-    assert caplog.messages[0] == "Delete webhook data for 'tests.my_app.models.MyModel' could not be created."
+    assert (
+        caplog.messages[0]
+        == "Delete webhook data for 'tests.my_app.models.MyModel' could not be created."
+    )
     caplog.clear()
 
     m5.assert_not_called()
@@ -696,14 +731,18 @@ def test_webhook__single_webhook__correct_signal__create_only(settings):
         is_superuser=True,
     )
 
-    with patch("signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)) as mock_1:
+    with patch(
+        "signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)
+    ) as mock_1:
         user.save()
 
     mock_1.assert_called_once()
 
     user.username = "xx"
 
-    with patch("signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)) as mock_2:
+    with patch(
+        "signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)
+    ) as mock_2:
         user.save(update_fields=["username"])
 
     mock_2.assert_not_called()
@@ -742,14 +781,18 @@ def test_webhook__single_webhook__correct_signal__update_only(settings):
         is_superuser=True,
     )
 
-    with patch("signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)) as mock_1:
+    with patch(
+        "signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)
+    ) as mock_1:
         user.save()
 
     mock_1.assert_not_called()
 
     user.username = "xx"
 
-    with patch("signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)) as mock_2:
+    with patch(
+        "signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)
+    ) as mock_2:
         user.save(update_fields=["username"])
 
     mock_2.assert_called_once()
@@ -788,14 +831,18 @@ def test_webhook__single_webhook__correct_signal__delete_only(settings):
         is_superuser=True,
     )
 
-    with patch("signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)) as mock_1:
+    with patch(
+        "signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)
+    ) as mock_1:
         user.save()
 
     mock_1.assert_not_called()
 
     user.username = "xx"
 
-    with patch("signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)) as mock_2:
+    with patch(
+        "signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)
+    ) as mock_2:
         user.save(update_fields=["username"])
 
     mock_2.assert_not_called()
@@ -834,14 +881,18 @@ def test_webhook__single_webhook__correct_signal__create_or_update(settings):
         is_superuser=True,
     )
 
-    with patch("signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)) as mock_1:
+    with patch(
+        "signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)
+    ) as mock_1:
         user.save()
 
     mock_1.assert_called_once()
 
     user.username = "xx"
 
-    with patch("signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)) as mock_2:
+    with patch(
+        "signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)
+    ) as mock_2:
         user.save(update_fields=["username"])
 
     mock_2.assert_called_once()
@@ -880,14 +931,18 @@ def test_webhook__single_webhook__correct_signal__create_or_delete(settings):
         is_superuser=True,
     )
 
-    with patch("signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)) as mock_1:
+    with patch(
+        "signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)
+    ) as mock_1:
         user.save()
 
     mock_1.assert_called_once()
 
     user.username = "xx"
 
-    with patch("signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)) as mock_2:
+    with patch(
+        "signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)
+    ) as mock_2:
         user.save(update_fields=["username"])
 
     mock_2.assert_not_called()
@@ -926,14 +981,18 @@ def test_webhook__single_webhook__correct_signal__update_or_delete(settings):
         is_superuser=True,
     )
 
-    with patch("signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)) as mock_1:
+    with patch(
+        "signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)
+    ) as mock_1:
         user.save()
 
     mock_1.assert_not_called()
 
     user.username = "xx"
 
-    with patch("signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)) as mock_2:
+    with patch(
+        "signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)
+    ) as mock_2:
         user.save(update_fields=["username"])
 
     mock_2.assert_called_once()
@@ -972,14 +1031,18 @@ def test_webhook__single_webhook__correct_signal__all(settings):
         is_superuser=True,
     )
 
-    with patch("signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)) as mock_1:
+    with patch(
+        "signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)
+    ) as mock_1:
         user.save()
 
     mock_1.assert_called_once()
 
     user.username = "xx"
 
-    with patch("signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)) as mock_2:
+    with patch(
+        "signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)
+    ) as mock_2:
         user.save(update_fields=["username"])
 
     mock_2.assert_called_once()
@@ -1019,14 +1082,18 @@ def test_webhook__single_webhook__disable_hooks_dont_fire(settings):
         is_superuser=True,
     )
 
-    with patch("signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)) as mock_1:
+    with patch(
+        "signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)
+    ) as mock_1:
         user.save()
 
     mock_1.assert_not_called()
 
     user.username = "xx"
 
-    with patch("signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)) as mock_2:
+    with patch(
+        "signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)
+    ) as mock_2:
         user.save(update_fields=["username"])
 
     mock_2.assert_not_called()
@@ -1074,7 +1141,9 @@ def test_webhook__single_webhook__keep_response(settings):
     resp = Response(204)
     resp._content = b"bar"
 
-    with patch("signal_webhooks.handlers.httpx.AsyncClient.post", return_value=resp) as mock:
+    with patch(
+        "signal_webhooks.handlers.httpx.AsyncClient.post", return_value=resp
+    ) as mock:
         user.save()
 
     mock.assert_called_once()
@@ -1113,7 +1182,9 @@ def test_webhook__single_webhook__dont_keep_response(settings):
     resp = Response(204)
     resp._content = b"bar"
 
-    with patch("signal_webhooks.handlers.httpx.AsyncClient.post", return_value=resp) as mock:
+    with patch(
+        "signal_webhooks.handlers.httpx.AsyncClient.post", return_value=resp
+    ) as mock:
         user.save()
 
     mock.assert_called_once()
@@ -1152,7 +1223,9 @@ def test_webhook__single_webhook__keep_response__failure(settings):
     resp = Response(400)
     resp._content = b"bar"
 
-    with patch("signal_webhooks.handlers.httpx.AsyncClient.post", return_value=resp) as mock:
+    with patch(
+        "signal_webhooks.handlers.httpx.AsyncClient.post", return_value=resp
+    ) as mock:
         user.save()
 
     mock.assert_called_once()
@@ -1226,7 +1299,9 @@ def test_webhook__single_webhook__thread_task_handler(settings):
         is_superuser=True,
     )
 
-    with patch("signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)) as mock:
+    with patch(
+        "signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)
+    ) as mock:
         user.save()
 
         # wait for the thread to finnish
@@ -1270,7 +1345,9 @@ def test_webhook__multiple_webhooks(settings):
         is_superuser=True,
     )
 
-    with patch("signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)) as mock:
+    with patch(
+        "signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)
+    ) as mock:
         user.save()
 
     mock.assert_called()
@@ -1316,7 +1393,9 @@ def test_webhook__multiple_webhooks__failure(settings):
         is_superuser=True,
     )
 
-    with patch("signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(400)) as mock:
+    with patch(
+        "signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(400)
+    ) as mock:
         user.save()
 
     mock.assert_called()
@@ -1411,7 +1490,9 @@ def test_webhook__swapped_webhook_model(settings):
         is_superuser=True,
     )
 
-    with patch("signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)) as mock_1:
+    with patch(
+        "signal_webhooks.handlers.httpx.AsyncClient.post", return_value=Response(204)
+    ) as mock_1:
         user.save()
 
     mock_1.assert_called_once()

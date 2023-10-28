@@ -3,5 +3,5 @@ __all__ = [
 ]
 
 
-class WebhookCancelled(Exception):
+class WebhookCancelled(Exception):  # noqa: N818
     """Webhook was cancelled before it was sent."""

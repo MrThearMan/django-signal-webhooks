@@ -1,11 +1,16 @@
+from __future__ import annotations
+
 import logging
+from typing import TYPE_CHECKING
 
 from django import forms
 from django.contrib import admin
 
 from .settings import webhook_settings
-from .typing import Optional
 from .utils import get_webhookhook_model
+
+if TYPE_CHECKING:
+    from .typing import Any, Optional, Union
 
 __all__ = [
     "WebhookModelForm",
@@ -27,7 +32,7 @@ class WebhookModelForm(forms.ModelForm):
             "auth_token": forms.Textarea,
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         if webhook_settings.HIDE_TOKEN:
             instance: Optional[WebhookModel] = kwargs.get("instance")
             self._auth_token: Optional[str] = None
@@ -37,15 +42,13 @@ class WebhookModelForm(forms.ModelForm):
 
         super().__init__(*args, **kwargs)
 
-        if webhook_settings.HIDE_TOKEN:
-            if self._auth_token is not None:
-                masked_auth_token = self._auth_token.replace(self._auth_token[:-5], "********", 1)
-                self.fields["auth_token"].help_text += f" Current token: {masked_auth_token}"
+        if webhook_settings.HIDE_TOKEN and self._auth_token is not None:
+            masked_auth_token = self._auth_token.replace(self._auth_token[:-5], "********", 1)
+            self.fields["auth_token"].help_text += f" Current token: {masked_auth_token}"
 
-    def clean(self):
-        if webhook_settings.HIDE_TOKEN:
-            if self.cleaned_data["auth_token"] == "" and self._auth_token is not None:
-                self.cleaned_data["auth_token"] = self._auth_token
+    def clean(self) -> Union[dict[str, Any], None]:
+        if webhook_settings.HIDE_TOKEN and self.cleaned_data["auth_token"] == "" and self._auth_token is not None:
+            self.cleaned_data["auth_token"] = self._auth_token
         return super().clean()
 
 
@@ -77,6 +80,6 @@ class WebhookAdmin(admin.ModelAdmin):
         "last_failure",
     ]
 
-    def lookup_allowed(self, lookup, value):  # pragma: no cover
+    def lookup_allowed(self, lookup: str, value: str) -> bool:  # pragma: no cover
         # Don't allow lookups involving auth tokens
         return not lookup.startswith("auth_token") and super().lookup_allowed(lookup, value)

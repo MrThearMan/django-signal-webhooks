@@ -1,12 +1,21 @@
-from datetime import datetime
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from django.db import models
-from django.db.models import Model
 
 from .fields import TokenField
 from .settings import webhook_settings
-from .typing import METHOD_SIGNALS, Any, Dict, Method, Optional, SignalChoices
+from .typing import METHOD_SIGNALS, SignalChoices
 from .utils import decode_cipher_key, is_dict, model_from_reference, reference_for_model
+
+if TYPE_CHECKING:
+    from datetime import datetime
+
+    from django.db.models import Model
+
+    from .typing import Any, Dict, Method, Optional
+
 
 __all__ = [
     "Webhook",
@@ -17,7 +26,7 @@ __all__ = [
 class WebhookQuerySet(models.QuerySet["Webhook"]):
     """Webhook queryset."""
 
-    def get_for_model(self, instance: Model, method: Method) -> models.QuerySet["Webhook"]:
+    def get_for_model(self, instance: Model, method: Method) -> models.QuerySet[Webhook]:
         kwargs: Dict[str, Any] = webhook_settings.FILTER_KWARGS(instance, method)
         return self.filter(
             ref=reference_for_model(type(instance)),
@@ -120,7 +129,7 @@ class WebhookBase(models.Model):
             ),
         ]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
     def default_headers(self) -> Dict[str, str]:

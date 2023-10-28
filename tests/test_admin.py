@@ -191,7 +191,9 @@ def test_add_webhook_in_admin_panel__check_model_ref__hooks_not_defined(settings
     assert not hasattr(form, "_auth_token")
 
     assert form.instance.id is None  # Nothing saved yet
-    assert form.errors == {"ref": ["Webhooks not defined for 'django.contrib.auth.models.Group'."]}
+    assert form.errors == {
+        "ref": ["Webhooks not defined for 'django.contrib.auth.models.Group'."]
+    }
 
 
 @pytest.mark.django_db
@@ -221,7 +223,9 @@ def test_add_webhook_in_admin_panel__check_model_ref__not_a_model(settings):
     assert not hasattr(form, "_auth_token")
 
     assert form.instance.id is None  # Nothing saved yet
-    assert form.errors == {"ref": ["'django.contrib.auth.models.AnonymousUser' is not a django model."]}
+    assert form.errors == {
+        "ref": ["'django.contrib.auth.models.AnonymousUser' is not a django model."]
+    }
 
 
 @pytest.mark.django_db
@@ -389,7 +393,9 @@ def test_add_webhook_in_admin_panel__prevent_duplicate_hooks(settings):
     assert not hasattr(form, "_auth_token")
 
     assert form.instance.id is None  # Nothing saved yet
-    assert form.errors == {"__all__": ["Webhook with this Referenced model and Endpoint already exists."]}
+    assert form.errors == {
+        "__all__": ["Webhook with this Referenced model and Endpoint already exists."]
+    }
 
 
 @pytest.mark.django_db
@@ -663,7 +669,9 @@ def test_add_webhook_in_admin_panel__check_model_ref__not_proper_import(settings
     assert not hasattr(form, "_auth_token")
 
     assert form.instance.id is None  # Nothing saved yet
-    assert form.errors == {"ref": ["Could not import 'foo'. 'foo' doesn't look like a module path."]}
+    assert form.errors == {
+        "ref": ["Could not import 'foo'. 'foo' doesn't look like a module path."]
+    }
 
 
 @pytest.mark.django_db

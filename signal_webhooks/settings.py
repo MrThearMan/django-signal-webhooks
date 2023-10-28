@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from django.test.signals import setting_changed
 from settings_holder import SettingsHolder, reload_settings
 

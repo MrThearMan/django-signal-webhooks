@@ -5,6 +5,7 @@ import string
 import pytest
 from django.contrib.auth.models import Group, User
 from django.core.exceptions import ValidationError
+from freezegun import freeze_time
 
 from signal_webhooks.utils import (
     decode_cipher_key,
@@ -143,8 +144,8 @@ def test_truncate():
     assert len(truncate(len_over)) == 10_000
 
 
-@pytest.mark.freeze_time("2022-01-01T00:00:00", tz_offset=0)
-@pytest.mark.django_db
+@freeze_time("2022-01-01T00:00:00")
+@pytest.mark.django_db()
 def test_default_serializer__user():
     user = User.objects.create(
         username="x",
@@ -175,7 +176,7 @@ def test_default_serializer__user():
     }
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db()
 def test_default_serializer__group():
     group = Group.objects.create(name="x")
 
@@ -191,7 +192,7 @@ def test_default_serializer__group():
     }
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db()
 def test_default_serializer__mymodel():
     mymodel = MyModel.objects.create(name="x")
 

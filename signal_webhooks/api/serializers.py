@@ -26,6 +26,7 @@ class WebhookSerializer(ModelSerializer):
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         if get_webhookhook_model().objects.filter(ref=attrs["ref"], endpoint=attrs["endpoint"]).exists():
-            raise ValidationError("Webhook for this model to this endpoint already exists.")
+            msg = "Webhook for this model to this endpoint already exists."
+            raise ValidationError(msg)
 
         return attrs
