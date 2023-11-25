@@ -8,6 +8,8 @@ export DJANGO_SETTINGS_MODULE = tests.project.settings
 .PHONY: tox
 .PHONY: hook
 .PHONY: lint
+.PHONY: migrate
+.PHONY: migrations
 .PHONY: mypy
 .PHONY: Makefile
 
@@ -30,6 +32,8 @@ define helptext
   tox <args>           Run all tests with tox.
   hook                 Install pre-commit hook.
   lint                 Run pre-commit hooks on all files.
+  migrate              Run migrations.
+  migrations           Create migrations.
   mypy                 Run mypy on all files.
 
   Use quotes (" ") if command contains flags (-h / --help)
@@ -60,6 +64,12 @@ hook:
 
 lint:
 	@poetry run pre-commit run --all-files
+
+migrate:
+	@poetry run python manage.py migrate
+
+migrations:
+	@poetry run python manage.py makemigrations
 
 mypy:
 	@poetry run mypy django_signal_webhooks/

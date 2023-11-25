@@ -152,3 +152,7 @@ METHOD_SIGNALS: dict[Method, set[SignalChoices]] = {
     "UPDATE": SignalChoices.update_choises(),
     "DELETE": SignalChoices.delete_choises(),
 }
+
+# Define a maximum column size based on MS SQL Server limitation:
+# https://docs.microsoft.com/en-us/sql/sql-server/maximum-capacity-specifications-for-sql-server
+MAX_COL_SIZE: int = 8_000

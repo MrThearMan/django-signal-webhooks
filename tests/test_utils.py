@@ -7,6 +7,7 @@ from django.contrib.auth.models import Group, User
 from django.core.exceptions import ValidationError
 from freezegun import freeze_time
 
+from signal_webhooks.typing import MAX_COL_SIZE
 from signal_webhooks.utils import (
     decode_cipher_key,
     default_serializer,
@@ -137,11 +138,11 @@ def test_is_dict__fail():
 
 
 def test_truncate():
-    len_max = "".join(random.choice(string.ascii_letters) for _ in range(10_000))
-    len_over = "".join(random.choice(string.ascii_letters) for _ in range(10_001))
+    len_max = "".join(random.choice(string.ascii_letters) for _ in range(MAX_COL_SIZE))
+    len_over = "".join(random.choice(string.ascii_letters) for _ in range(MAX_COL_SIZE + 1))
 
-    assert len(truncate(len_max)) == 10_000
-    assert len(truncate(len_over)) == 10_000
+    assert len(truncate(len_max)) == MAX_COL_SIZE
+    assert len(truncate(len_over)) == MAX_COL_SIZE
 
 
 @freeze_time("2022-01-01T00:00:00")

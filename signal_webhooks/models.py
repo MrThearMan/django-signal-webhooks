@@ -6,7 +6,7 @@ from django.db import models
 
 from .fields import TokenField
 from .settings import webhook_settings
-from .typing import METHOD_SIGNALS, SignalChoices
+from .typing import MAX_COL_SIZE, METHOD_SIGNALS, SignalChoices
 from .utils import decode_cipher_key, is_dict, model_from_reference, reference_for_model
 
 if TYPE_CHECKING:
@@ -73,7 +73,7 @@ class WebhookBase(models.Model):
     auth_token: str = TokenField(
         default="",
         blank=True,
-        max_length=10_000,
+        max_length=MAX_COL_SIZE,
         verbose_name="authentication token",
         help_text="Authentication token to use in an Authorization header.",
         validators=[decode_cipher_key],
@@ -101,7 +101,7 @@ class WebhookBase(models.Model):
     last_response: str = models.CharField(
         default="",
         blank=True,
-        max_length=10_000,
+        max_length=MAX_COL_SIZE,
         verbose_name="last response",
         help_text="Latest response to this webhook.",
     )

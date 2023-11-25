@@ -15,7 +15,7 @@ from django.db.models.base import ModelBase
 
 from .serializers import webhook_serializer
 from .settings import webhook_settings
-from .typing import ClientKwargs
+from .typing import MAX_COL_SIZE, ClientKwargs
 
 if TYPE_CHECKING:
     from django.db.models import Model
@@ -56,7 +56,7 @@ def is_dict(value: str) -> None:
         raise ValidationError(msg)
 
 
-def truncate(string: str, limit: int = 10_000) -> str:
+def truncate(string: str, limit: int = MAX_COL_SIZE) -> str:
     if len(string) > limit:
         string = string[: limit - 3] + "..."
     return string
