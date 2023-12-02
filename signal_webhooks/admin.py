@@ -7,7 +7,7 @@ from django import forms
 from django.contrib import admin
 
 from .settings import webhook_settings
-from .utils import get_webhookhook_model
+from .utils import get_webhook_model
 
 if TYPE_CHECKING:
     from .typing import Any, Optional, Union
@@ -21,7 +21,7 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
-WebhookModel = get_webhookhook_model()
+WebhookModel = get_webhook_model()
 
 
 class WebhookModelForm(forms.ModelForm):

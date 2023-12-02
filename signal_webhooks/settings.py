@@ -76,6 +76,9 @@ class DefaultSettings(NamedTuple):
     #
     # Unique id for the 'signals.post_delete' receiver the webhooks are using.
     DISPATCH_UID_POST_DELETE: str = "django-signal-webhooks-post-delete"
+    #
+    # Unique id for the 'signals.m2m_changed' receiver the webhooks are using.
+    DISPATCH_UID_M2M_CHANGED: str = "django-signal-webhooks-m2m-changed"
 
 
 SETTING_NAME: str = "SIGNAL_WEBHOOKS"

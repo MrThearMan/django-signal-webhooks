@@ -8,8 +8,11 @@ from rest_framework.test import APIClient
 from signal_webhooks.models import Webhook
 from signal_webhooks.typing import SignalChoices
 
+pytestmark = [
+    pytest.mark.django_db,
+]
 
-@pytest.mark.django_db
+
 def test_webhook_api(settings, api_client: APIClient):
     settings.SIGNAL_WEBHOOKS = {
         "TASK_HANDLER": "signal_webhooks.handlers.sync_task_handler",
@@ -20,7 +23,7 @@ def test_webhook_api(settings, api_client: APIClient):
 
     data = {
         "name": "foo",
-        "signal": SignalChoices.ALL.value,
+        "signal": SignalChoices.CREATE_UPDATE_DELETE_OR_M2M.value,
         "ref": "django.contrib.auth.models.User",
         "endpoint": "https://www.example.com",
         "headers": {},
@@ -34,7 +37,7 @@ def test_webhook_api(settings, api_client: APIClient):
     assert response.json() == {
         "id": 1,
         "name": "foo",
-        "signal": SignalChoices.ALL.value,
+        "signal": SignalChoices.CREATE_UPDATE_DELETE_OR_M2M.value,
         "ref": "django.contrib.auth.models.User",
         "endpoint": "https://www.example.com",
         "headers": {},
@@ -56,7 +59,6 @@ def test_webhook_api(settings, api_client: APIClient):
     mock_1.assert_called_once()
 
 
-@pytest.mark.django_db
 def test_webhook_api__exists(settings, api_client: APIClient):
     settings.SIGNAL_WEBHOOKS = {
         "TASK_HANDLER": "signal_webhooks.handlers.sync_task_handler",
@@ -67,7 +69,7 @@ def test_webhook_api__exists(settings, api_client: APIClient):
 
     Webhook.objects.create(
         name="foo",
-        signal=SignalChoices.ALL.value,
+        signal=SignalChoices.CREATE_UPDATE_DELETE_OR_M2M.value,
         ref="django.contrib.auth.models.User",
         endpoint="https://www.example.com",
         headers={},
@@ -78,7 +80,7 @@ def test_webhook_api__exists(settings, api_client: APIClient):
 
     data = {
         "name": "bar",
-        "signal": SignalChoices.ALL.value,
+        "signal": SignalChoices.CREATE_UPDATE_DELETE_OR_M2M.value,
         "ref": "django.contrib.auth.models.User",
         "endpoint": "https://www.example.com",
         "headers": {},
@@ -89,6 +91,4 @@ def test_webhook_api__exists(settings, api_client: APIClient):
 
     response = api_client.post(reverse("webhook-list"), data=data, format="json")
 
-    assert response.json() == {
-        "non_field_errors": ["Webhook for this model to this endpoint already exists."]
-    }
+    assert response.json() == {"non_field_errors": ["Webhook for this model to this endpoint already exists."]}

@@ -24,7 +24,7 @@ You should now see the webhooks section in django's admin panel.
 
 The easiest way to add webhooks is just to use the default
 configuration by settings ... (ellipses) to a model in the
-HOOKS confiuration option.
+HOOKS configuration option.
 
 ```python
 # project/settings.py
@@ -52,6 +52,10 @@ SIGNAL_WEBHOOKS = {
             "CREATE": None,
             "UPDATE": "my.custom.func",
             "DELETE": ...,
+            # Many to many post signals
+            "M2M_ADD": ...,
+            "M2M_REMOVE": ...,
+            "M2M_CLEAR": ...,
         },
     },
 }

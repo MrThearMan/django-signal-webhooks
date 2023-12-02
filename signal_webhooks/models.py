@@ -42,24 +42,25 @@ class WebhookBase(models.Model):
     name: str = models.CharField(
         unique=True,
         db_index=True,
-        max_length=256,
+        max_length=255,
         verbose_name="name",
         help_text="Webhook name.",
     )
-    signal: SignalChoices = models.IntegerField(
+    signal: SignalChoices = models.CharField(
+        max_length=255,
         verbose_name="signal",
         help_text="Signal the webhook fires to.",
         choices=SignalChoices.choices,
     )
     ref: str = models.CharField(
-        max_length=1024,
+        max_length=1023,
         db_index=True,
         verbose_name="referenced model",
         help_text="Dot import notation to the model the webhook is for.",
         validators=[model_from_reference],
     )
     endpoint: str = models.URLField(
-        max_length=2048,
+        max_length=2047,
         verbose_name="endpoint",
         help_text="Target endpoint for this webhook.",
     )

@@ -57,6 +57,11 @@ __all__ = [
     "Union",
 ]
 
+JSONValue = Union[str, int, float, bool, None, tuple["JSONValue"], list["JSONValue"], dict[str, "JSONValue"]]
+JSONData = Union[list[dict[str, JSONValue]], dict[str, JSONValue]]
+Method = Literal["CREATE", "UPDATE", "DELETE", "M2M_ADD", "M2M_REMOVE", "M2M_CLEAR"]
+M2MAction = Literal["pre_add", "post_add", "pre_remove", "post_remove", "pre_clear", "post_clear"]
+
 
 class PostSaveData(TypedDict):
     signal: ModelSignal
@@ -76,18 +81,14 @@ class PostDeleteData(TypedDict):
         origin: Union[Model, QuerySet]
 
 
-JSONValue = Union[
-    str,
-    int,
-    float,
-    bool,
-    None,
-    tuple["JSONValue"],
-    list["JSONValue"],
-    dict[str, "JSONValue"],
-]
-JSONData = Union[list[dict[str, JSONValue]], dict[str, JSONValue]]
-Method = Literal["CREATE", "UPDATE", "DELETE"]
+class M2MChangedData(TypedDict):
+    signal: ModelSignal
+    action: M2MAction
+    instance: Model
+    reverse: bool
+    model: Type[Model]
+    pk_set: Set[int]
+    using: str  # database name
 
 
 class ClientKwargs(TypedDict, total=False):
@@ -108,49 +109,139 @@ class HooksData(TypedDict, total=False):
     CREATE: Union[str, Callable, None]
     UPDATE: Union[str, Callable, None]
     DELETE: Union[str, Callable, None]
+    M2M_ADD: Union[str, Callable, None]
+    M2M_REMOVE: Union[str, Callable, None]
+    M2M_CLEAR: Union[str, Callable, None]
 
 
-class SignalChoices(models.IntegerChoices):
-    CREATE = 0, "CREATE"
-    UPDATE = 1, "UPDATE"
-    DELETE = 2, "DELETE"
-    CREATE_OR_UPDATE = 3, "CREATE OR UPDATE"
-    CREATE_OR_DELETE = 4, "CREATE OR DELETE"
-    UPDATE_OR_DELETE = 5, "UPDATE OR DELETE"
-    ALL = 6, "ALL"
+class SignalChoices(models.TextChoices):
+    CREATE = (
+        "CREATE",
+        "Create",
+    )
+    UPDATE = (
+        "UPDATE",
+        "Update",
+    )
+    DELETE = (
+        "DELETE",
+        "Delete",
+    )
+    M2M = (
+        "M2M",
+        "M2M changed",
+    )
+    CREATE_OR_UPDATE = (
+        "CREATE_OR_UPDATE",
+        "Create or Update",
+    )
+    CREATE_OR_DELETE = (
+        "CREATE_OR_DELETE",
+        "Create or Delete",
+    )
+    CREATE_OR_M2M = (
+        "CREATE_OR_M2M",
+        "Create or M2M changed",
+    )
+    UPDATE_OR_DELETE = (
+        "UPDATE_OR_DELETE",
+        "Update or Delete",
+    )
+    UPDATE_OR_M2M = (
+        "UPDATE_OR_M2M",
+        "Update or M2M changed",
+    )
+    DELETE_OR_M2M = (
+        "DELETE_OR_M2M",
+        "Delete or M2M changed",
+    )
+    CREATE_UPDATE_OR_DELETE = (
+        "CREATE_UPDATE_OR_DELETE",
+        "Create, Update or Delete",
+    )
+    CREATE_UPDATE_OR_M2M = (
+        "CREATE_UPDATE_OR_M2M",
+        "Create, Update or M2M changed",
+    )
+    CREATE_DELETE_OR_M2M = (
+        "CREATE_DELETE_OR_M2M",
+        "Create, Delete or M2M changed",
+    )
+    UPDATE_DELETE_OR_M2M = (
+        "UPDATE_DELETE_OR_M2M",
+        "Update, Delete or M2M changed",
+    )
+    CREATE_UPDATE_DELETE_OR_M2M = (
+        "CREATE_UPDATE_DELETE_OR_M2M",
+        "Create, Update or Delete, or M2M changed",
+    )
 
     @classmethod
-    def create_choises(cls) -> set["SignalChoices"]:
+    def create_choices(cls) -> set["SignalChoices"]:
         return {
             cls.CREATE,
             cls.CREATE_OR_UPDATE,
             cls.CREATE_OR_DELETE,
-            cls.ALL,
+            cls.CREATE_OR_M2M,
+            cls.CREATE_UPDATE_OR_DELETE,
+            cls.CREATE_DELETE_OR_M2M,
+            cls.CREATE_UPDATE_OR_M2M,
+            cls.CREATE_UPDATE_DELETE_OR_M2M,
         }
 
     @classmethod
-    def update_choises(cls) -> set["SignalChoices"]:
+    def update_choices(cls) -> set["SignalChoices"]:
         return {
             cls.UPDATE,
             cls.CREATE_OR_UPDATE,
             cls.UPDATE_OR_DELETE,
-            cls.ALL,
+            cls.UPDATE_OR_M2M,
+            cls.CREATE_UPDATE_OR_DELETE,
+            cls.CREATE_UPDATE_OR_M2M,
+            cls.UPDATE_DELETE_OR_M2M,
+            cls.CREATE_UPDATE_DELETE_OR_M2M,
         }
 
     @classmethod
-    def delete_choises(cls) -> set["SignalChoices"]:
+    def delete_choices(cls) -> set["SignalChoices"]:
         return {
             cls.DELETE,
             cls.CREATE_OR_DELETE,
             cls.UPDATE_OR_DELETE,
-            cls.ALL,
+            cls.DELETE_OR_M2M,
+            cls.CREATE_UPDATE_OR_DELETE,
+            cls.CREATE_DELETE_OR_M2M,
+            cls.UPDATE_DELETE_OR_M2M,
+            cls.CREATE_UPDATE_DELETE_OR_M2M,
+        }
+
+    @classmethod
+    def m2m_choices(cls) -> set["SignalChoices"]:
+        return {
+            cls.M2M,
+            cls.CREATE_OR_M2M,
+            cls.UPDATE_OR_M2M,
+            cls.DELETE_OR_M2M,
+            cls.CREATE_DELETE_OR_M2M,
+            cls.CREATE_UPDATE_OR_M2M,
+            cls.UPDATE_DELETE_OR_M2M,
+            cls.CREATE_UPDATE_DELETE_OR_M2M,
         }
 
 
 METHOD_SIGNALS: dict[Method, set[SignalChoices]] = {
-    "CREATE": SignalChoices.create_choises(),
-    "UPDATE": SignalChoices.update_choises(),
-    "DELETE": SignalChoices.delete_choises(),
+    "CREATE": SignalChoices.create_choices(),
+    "UPDATE": SignalChoices.update_choices(),
+    "DELETE": SignalChoices.delete_choices(),
+    "M2M_ADD": SignalChoices.m2m_choices(),
+    "M2M_REMOVE": SignalChoices.m2m_choices(),
+    "M2M_CLEAR": SignalChoices.m2m_choices(),
+}
+
+ACTION_TO_METHOD: Dict[M2MAction, Method] = {
+    "post_add": "M2M_ADD",
+    "post_remove": "M2M_REMOVE",
+    "post_clear": "M2M_CLEAR",
 }
 
 # Define a maximum column size based on MS SQL Server limitation:

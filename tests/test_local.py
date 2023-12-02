@@ -8,10 +8,13 @@ from tests.my_app.models import MyModel
 
 ENDPOINT = "https://4b4e-194-137-1-169.eu.ngrok.io"
 
+pytestmark = [
+    pytest.mark.e2e,
+    pytest.mark.django_db(transaction=True),
+    pytest.mark.skipif(getenv("CI", "false") == "true", reason="Only for testing locally"),
+]
 
-@pytest.mark.e2e
-@pytest.mark.skipif(getenv("CI", "false") == "true", reason="Only for testing locally")
-@pytest.mark.django_db(transaction=True)
+
 def test_webhook_e2e__single_webhook__ngrok(settings):
     settings.SIGNAL_WEBHOOKS = {
         "TASK_HANDLER": "signal_webhooks.handlers.sync_task_handler",
@@ -23,7 +26,7 @@ def test_webhook_e2e__single_webhook__ngrok(settings):
 
     Webhook.objects.create(
         name="foo",
-        signal=SignalChoices.ALL,
+        signal=SignalChoices.CREATE_UPDATE_DELETE_OR_M2M,
         ref="tests.my_app.models.MyModel",
         endpoint=ENDPOINT + "/hook/",
     )
@@ -32,9 +35,6 @@ def test_webhook_e2e__single_webhook__ngrok(settings):
     user.save()
 
 
-@pytest.mark.e2e
-@pytest.mark.skipif(getenv("CI", "false") == "true", reason="Only for testing locally")
-@pytest.mark.django_db(transaction=True)
 def test_webhook_e2e__single_webhook__timeout(settings):
     settings.SIGNAL_WEBHOOKS = {
         "TASK_HANDLER": "signal_webhooks.handlers.sync_task_handler",
@@ -46,7 +46,7 @@ def test_webhook_e2e__single_webhook__timeout(settings):
 
     Webhook.objects.create(
         name="foo",
-        signal=SignalChoices.ALL,
+        signal=SignalChoices.CREATE_UPDATE_DELETE_OR_M2M,
         ref="tests.my_app.models.MyModel",
         endpoint="https://httpstat.us/400?sleep=5000",
     )

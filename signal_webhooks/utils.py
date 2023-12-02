@@ -37,7 +37,7 @@ __all__ = [
     "decode_cipher_key",
     "default_client_kwargs",
     "default_serializer",
-    "get_webhookhook_model",
+    "get_webhook_model",
     "is_dict",
     "model_from_reference",
     "random_cipher_key",
@@ -94,7 +94,7 @@ def default_filter_kwargs(instance: Model, method: Method) -> Dict[str, Any]:
 
 
 @cache
-def get_webhookhook_model() -> Type[WebhookBase]:
+def get_webhook_model() -> Type[WebhookBase]:
     ref = getattr(settings, "SIGNAL_WEBHOOKS_CUSTOM_MODEL", "signal_webhooks.models.Webhook")
 
     if ref == "signal_webhooks.models.Webhook":
