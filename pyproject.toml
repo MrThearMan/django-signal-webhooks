@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "django-signal-webhooks"
-version = "0.2.5"
+version = "0.3.0"
 description = "Add webhooks to django using signals."
 authors = [
     "Matti Lamppu <lamppu.matti.akseli@gmail.com>",
