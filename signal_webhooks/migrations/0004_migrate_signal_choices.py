@@ -2,7 +2,7 @@
 
 from django.db import migrations, models
 
-migrations_mapping: dict[int, str] = {
+migrations_mapping = {
     0: "CREATE",
     1: "UPDATE",
     2: "DELETE",

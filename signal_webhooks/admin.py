@@ -10,7 +10,7 @@ from .settings import webhook_settings
 from .utils import get_webhook_model
 
 if TYPE_CHECKING:
-    from .typing import Any, Optional, Union
+    from .typing import Any, Dict, Optional, Union
 
 __all__ = [
     "WebhookModelForm",
@@ -46,7 +46,7 @@ class WebhookModelForm(forms.ModelForm):
             masked_auth_token = self._auth_token.replace(self._auth_token[:-5], "********", 1)
             self.fields["auth_token"].help_text += f" Current token: {masked_auth_token}"
 
-    def clean(self) -> Union[dict[str, Any], None]:
+    def clean(self) -> Union[Dict[str, Any], None]:
         if webhook_settings.HIDE_TOKEN and self.cleaned_data["auth_token"] == "" and self._auth_token is not None:
             self.cleaned_data["auth_token"] = self._auth_token
         return super().clean()

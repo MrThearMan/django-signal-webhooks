@@ -2,6 +2,7 @@ from collections.abc import Callable, Coroutine, Generator, Iterator, Mapping, S
 from typing import (
     Any,
     Dict,
+    FrozenSet,
     List,
     Literal,
     NamedTuple,
@@ -57,8 +58,8 @@ __all__ = [
     "Union",
 ]
 
-JSONValue = Union[str, int, float, bool, None, tuple["JSONValue"], list["JSONValue"], dict[str, "JSONValue"]]
-JSONData = Union[list[dict[str, JSONValue]], dict[str, JSONValue]]
+JSONValue = Union[str, int, float, bool, None, Tuple["JSONValue"], List["JSONValue"], Dict[str, "JSONValue"]]
+JSONData = Union[List[Dict[str, JSONValue]], Dict[str, JSONValue]]
 Method = Literal["CREATE", "UPDATE", "DELETE", "M2M_ADD", "M2M_REMOVE", "M2M_CLEAR"]
 M2MAction = Literal["pre_add", "post_add", "pre_remove", "post_remove", "pre_clear", "post_clear"]
 
@@ -69,7 +70,7 @@ class PostSaveData(TypedDict):
     created: bool
     raw: bool
     using: str  # database name
-    update_fields: Union[frozenset[str], None]
+    update_fields: Union[FrozenSet[str], None]
 
 
 class PostDeleteData(TypedDict):
@@ -177,7 +178,7 @@ class SignalChoices(models.TextChoices):
     )
 
     @classmethod
-    def create_choices(cls) -> set["SignalChoices"]:
+    def create_choices(cls) -> Set["SignalChoices"]:
         return {
             cls.CREATE,
             cls.CREATE_OR_UPDATE,
@@ -190,7 +191,7 @@ class SignalChoices(models.TextChoices):
         }
 
     @classmethod
-    def update_choices(cls) -> set["SignalChoices"]:
+    def update_choices(cls) -> Set["SignalChoices"]:
         return {
             cls.UPDATE,
             cls.CREATE_OR_UPDATE,
@@ -203,7 +204,7 @@ class SignalChoices(models.TextChoices):
         }
 
     @classmethod
-    def delete_choices(cls) -> set["SignalChoices"]:
+    def delete_choices(cls) -> Set["SignalChoices"]:
         return {
             cls.DELETE,
             cls.CREATE_OR_DELETE,
@@ -216,7 +217,7 @@ class SignalChoices(models.TextChoices):
         }
 
     @classmethod
-    def m2m_choices(cls) -> set["SignalChoices"]:
+    def m2m_choices(cls) -> Set["SignalChoices"]:
         return {
             cls.M2M,
             cls.CREATE_OR_M2M,
@@ -229,7 +230,7 @@ class SignalChoices(models.TextChoices):
         }
 
 
-METHOD_SIGNALS: dict[Method, set[SignalChoices]] = {
+METHOD_SIGNALS: Dict[Method, Set[SignalChoices]] = {
     "CREATE": SignalChoices.create_choices(),
     "UPDATE": SignalChoices.update_choices(),
     "DELETE": SignalChoices.delete_choices(),
