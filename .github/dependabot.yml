@@ -12,7 +12,7 @@ updates:
     pull-request-branch-name:
       separator: "-"
     groups:
-      python-dependencies:
+      github-actions-dependencies:
         patterns:
           - "*"
 
@@ -24,6 +24,6 @@ updates:
     pull-request-branch-name:
       separator: "-"
     groups:
-      github-actions-dependencies:
+      python-dependencies:
         patterns:
           - "*"
