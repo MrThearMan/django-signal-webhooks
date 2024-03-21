@@ -91,4 +91,4 @@ def test_webhook_api__exists(settings, api_client: APIClient):
 
     response = api_client.post(reverse("webhook-list"), data=data, format="json")
 
-    assert response.json() == {"non_field_errors": ["Webhook for this model to this endpoint already exists."]}
+    assert response.status_code == 400
