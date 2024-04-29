@@ -73,7 +73,7 @@ def decode_cipher_key(value: str = "") -> bytes:
     except TypeError as error:
         msg = "Cipher key not set."
         raise ValidationError(msg) from error
-    except Exception as error:  # noqa: BLE001
+    except Exception as error:
         msg = "Invalid cipher key."
         raise ValidationError(msg) from error
 
