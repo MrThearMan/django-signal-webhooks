@@ -3,7 +3,7 @@ from __future__ import annotations
 from django.test.signals import setting_changed
 from settings_holder import SettingsHolder, reload_settings
 
-from .typing import Any, Dict, HooksData, Method, NamedTuple, Optional, Set, Union
+from .typing import Any, HooksData, Method, NamedTuple, Union
 
 __all__ = [
     "webhook_settings",
@@ -20,7 +20,7 @@ class DefaultSettings(NamedTuple):
     # 'HooksData') to None will explicitly not allow hooks for that model (or appropriate
     # signal from 'HooksData' key). Webhooks cannot be created without the appropriate
     # definition in this setting.
-    HOOKS: Dict[str, Optional[HooksData]] = {}
+    HOOKS: dict[str, HooksData | None] = {}
     #
     # Timeout for responses from webhooks before they fail.
     TIMEOUT: int = 10
@@ -28,7 +28,7 @@ class DefaultSettings(NamedTuple):
     # Cipher key to use when encrypting tokens into the database.
     # Should be 16, 24, or 32 bytes converted to base64. You can use
     # 'signal_webhooks.utils.random_cipher_key' to generate one.
-    CIPHER_KEY: Optional[str] = None
+    CIPHER_KEY: str | None = None
     #
     # When this is set to True, auth_token will be hidden in admin panel after
     # it has been set. A small snippet from the end of the code will be shown
@@ -85,7 +85,7 @@ SETTING_NAME: str = "SIGNAL_WEBHOOKS"
 
 DEFAULTS = DefaultSettings()._asdict()
 
-IMPORT_STRINGS: Set[Union[bytes, str]] = {
+IMPORT_STRINGS: set[Union[bytes, str]] = {
     "HOOKS",
     "SERIALIZER",
     "CLIENT_KWARGS",
@@ -94,15 +94,15 @@ IMPORT_STRINGS: Set[Union[bytes, str]] = {
     "TASK_HANDLER",
 }
 
-REMOVED_SETTINGS: Set[str] = set()
+REMOVED_SETTINGS: set[str] = set()
 
 
 class WebhookSettingsHolder(SettingsHolder):
     def perform_import(self, val: Any, setting: str) -> Any:
-        if setting not in {"HOOKS"}:
+        if setting != "HOOKS":
             return super().perform_import(val, setting)  # pragma: no cover
 
-        val: Dict[str, HooksData]
+        val: dict[str, HooksData]
         method: Method
         for model_path, webhooks in val.items():
             if webhooks in (..., None):

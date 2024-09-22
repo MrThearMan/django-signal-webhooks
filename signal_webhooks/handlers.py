@@ -1,14 +1,15 @@
 from __future__ import annotations
 
 import asyncio
+import datetime
 import logging
-from datetime import datetime, timezone
 from threading import Thread
 from typing import TYPE_CHECKING
 
 import httpx
 from asgiref.sync import sync_to_async
-from django.db.models import Model, QuerySet, signals
+from django.db import models
+from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 
 from .exceptions import WebhookCancelled
@@ -24,15 +25,12 @@ if TYPE_CHECKING:
         Any,
         Callable,
         ClientKwargs,
-        Dict,
         HooksData,
         JSONData,
         M2MChangedData,
         Method,
-        Optional,
         PostDeleteData,
         PostSaveData,
-        Set,
     )
 
 
@@ -49,31 +47,31 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
-@receiver(signals.post_save, dispatch_uid=webhook_settings.DISPATCH_UID_POST_SAVE)
-def webhook_update_create_handler(sender: ModelBase, **kwargs: Any) -> None:
+@receiver(post_save, dispatch_uid=webhook_settings.DISPATCH_UID_POST_SAVE)
+def webhook_update_create_handler(sender: ModelBase, **kwargs: Any) -> None:  # noqa: ARG001
     kwargs: PostSaveData
     method: Method = "CREATE" if kwargs["created"] else "UPDATE"  # type: ignore[assignment]
     webhook_handler(instance=kwargs["instance"], method=method)
 
 
-@receiver(signals.post_delete, dispatch_uid=webhook_settings.DISPATCH_UID_POST_DELETE)
-def webhook_delete_handler(sender: ModelBase, **kwargs: Any) -> None:
+@receiver(post_delete, dispatch_uid=webhook_settings.DISPATCH_UID_POST_DELETE)
+def webhook_delete_handler(sender: ModelBase, **kwargs: Any) -> None:  # noqa: ARG001
     kwargs: PostDeleteData
     method: Method = "DELETE"
     webhook_handler(instance=kwargs["instance"], method=method)
 
 
-@receiver(signals.m2m_changed, dispatch_uid=webhook_settings.DISPATCH_UID_M2M_CHANGED)
-def webhook_m2m_handler(sender: ModelBase, **kwargs: Any) -> None:
+@receiver(models.signals.m2m_changed, dispatch_uid=webhook_settings.DISPATCH_UID_M2M_CHANGED)
+def webhook_m2m_handler(sender: ModelBase, **kwargs: Any) -> None:  # noqa: ARG001
     kwargs: M2MChangedData
-    method: Optional[Method] = ACTION_TO_METHOD.get(kwargs["action"])
+    method: Method | None = ACTION_TO_METHOD.get(kwargs["action"])
     # Don't fire webhooks for pre-actions
     if method is None:
         return
     webhook_handler(instance=kwargs["instance"], method=method)
 
 
-def webhook_handler(instance: Model, method: Method) -> None:
+def webhook_handler(instance: models.Model, method: Method) -> None:
     ref = reference_for_model(type(instance))
 
     hook = find_hook_handler(ref, method)
@@ -95,9 +93,9 @@ def webhook_handler(instance: Model, method: Method) -> None:
     webhook_settings.TASK_HANDLER(hook, instance=instance, data=data, method=method)
 
 
-def find_hook_handler(ref: str, method: Method) -> Optional[Callable]:
-    hook: Optional[Callable] = ...
-    hooks: Optional[HooksData] = webhook_settings.HOOKS.get(ref)
+def find_hook_handler(ref: str, method: Method) -> Callable | None:
+    hook: Callable | None = ...
+    hooks: HooksData | None = webhook_settings.HOOKS.get(ref)
 
     if hooks is None:
         return None
@@ -111,7 +109,7 @@ def find_hook_handler(ref: str, method: Method) -> Optional[Callable]:
     return hook
 
 
-def default_error_handler(hook: Webhook, error: Optional[Exception]) -> None:
+def default_error_handler(hook: Webhook, error: Exception | None) -> None:
     """
     Default handler for errors from webhooks.
 
@@ -129,8 +127,8 @@ def sync_task_handler(hook: Callable[..., None], **kwargs: Any) -> None:
     hook(**kwargs)
 
 
-def default_hook_handler(instance: Model, data: JSONData, method: Method) -> None:
-    hooks: QuerySet[Webhook] = get_webhook_model().objects.get_for_model(instance, method=method)
+def default_hook_handler(instance: models.Model, data: JSONData, method: Method) -> None:
+    hooks: models.QuerySet = get_webhook_model().objects.get_for_model(instance, method=method)
     if not hooks.exists():
         return
 
@@ -138,8 +136,8 @@ def default_hook_handler(instance: Model, data: JSONData, method: Method) -> Non
     asyncio.run(fire_webhooks(hooks, data, client_kwargs))
 
 
-def build_client_kwargs_by_hook_id(hooks: QuerySet[Webhook]) -> Dict[int, ClientKwargs]:
-    client_kwargs_by_hook_id: Dict[int, ClientKwargs] = {}
+def build_client_kwargs_by_hook_id(hooks: models.QuerySet) -> dict[int, ClientKwargs]:
+    client_kwargs_by_hook_id: dict[int, ClientKwargs] = {}
     for hook in hooks:
         client_kwargs_by_hook_id[hook.id] = webhook_settings.CLIENT_KWARGS(hook)
         client_kwargs_by_hook_id[hook.id].setdefault("headers", {})
@@ -147,19 +145,19 @@ def build_client_kwargs_by_hook_id(hooks: QuerySet[Webhook]) -> Dict[int, Client
     return client_kwargs_by_hook_id
 
 
-async def fire_webhooks(hooks: QuerySet[Webhook], data: JSONData, client_kwargs: Dict[int, ClientKwargs]) -> None:
-    futures: Set[asyncio.Task] = set()
-    hooks_by_name: Dict[str, Webhook] = {hook.name: hook for hook in hooks}
+async def fire_webhooks(hooks: models.QuerySet, data: JSONData, client_kwargs: dict[int, ClientKwargs]) -> None:
+    futures: set[asyncio.Task] = set()
+    hooks_by_name: dict[str, Webhook] = {hook.name: hook for hook in hooks}
     webhook_model = get_webhook_model()
 
     async with httpx.AsyncClient(timeout=webhook_settings.TIMEOUT, follow_redirects=True) as client:
-        for hook in hooks:
-            futures.add(
-                asyncio.Task(
-                    client.post(hook.endpoint, json=data, **client_kwargs[hook.id]),
-                    name=hook.name,
-                )
+        futures.update(
+            asyncio.Task(
+                client.post(hook.endpoint, json=data, **client_kwargs[hook.id]),
+                name=hook.name,
             )
+            for hook in hooks
+        )
 
         async for task in tasks_as_completed(futures):
             hook = hooks_by_name[task.get_name()]
@@ -168,17 +166,17 @@ async def fire_webhooks(hooks: QuerySet[Webhook], data: JSONData, client_kwargs:
                 response: httpx.Response = task.result()
             except Exception as error:
                 logger.exception(f"Webhook {hook.name!r} failed.", exc_info=error)
-                hook.last_failure = datetime.now(tz=timezone.utc)
+                hook.last_failure = datetime.datetime.now(tz=datetime.timezone.utc)
                 webhook_settings.ERROR_HANDLER(hook, error)
                 continue
 
             if response.status_code // 100 == 2:  # noqa: PLR2004
-                hook.last_success = datetime.now(tz=timezone.utc)
+                hook.last_success = datetime.datetime.now(tz=datetime.timezone.utc)
                 if hook.keep_last_response:
                     hook.last_response = truncate(response.content.decode())
 
             else:
-                hook.last_failure = datetime.now(tz=timezone.utc)
+                hook.last_failure = datetime.datetime.now(tz=datetime.timezone.utc)
                 webhook_settings.ERROR_HANDLER(hook, None)
                 if hook.keep_last_response:
                     hook.last_response = truncate(response.content.decode())

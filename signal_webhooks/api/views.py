@@ -1,6 +1,7 @@
 from rest_framework.viewsets import ModelViewSet
 
-from ..utils import get_webhook_model
+from signal_webhooks.utils import get_webhook_model
+
 from .serializers import WebhookSerializer
 
 __all__ = [

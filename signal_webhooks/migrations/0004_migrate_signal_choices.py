@@ -1,4 +1,4 @@
-# ruff: noqa
+# ruff: noqa: ANN001, ARG001, FBT003
 
 from django.db import migrations, models
 
@@ -13,7 +13,7 @@ migrations_mapping = {
 }
 
 
-def migrate_signal_choices(apps, schema_editor):  # pragma: no cover
+def migrate_signal_choices(apps, schema_editor) -> None:  # pragma: no cover
     # Migrate the signal choices from ints to strings.
     Webhook = apps.get_model("signal_webhooks", "Webhook")
     Webhook.objects.update(
@@ -24,7 +24,7 @@ def migrate_signal_choices(apps, schema_editor):  # pragma: no cover
     )
 
 
-def reverse_migrate_signal_choices(apps, schema_editor):  # pragma: no cover
+def reverse_migrate_signal_choices(apps, schema_editor) -> None:  # pragma: no cover
     # Reverse the signal migration.
     Webhook = apps.get_model("signal_webhooks", "Webhook")
     Webhook.objects.update(

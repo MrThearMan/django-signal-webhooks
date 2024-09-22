@@ -1,8 +1,14 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from rest_framework.exceptions import ValidationError
 from rest_framework.serializers import ModelSerializer
 
-from ..typing import Any, Dict
-from ..utils import get_webhook_model
+from signal_webhooks.utils import get_webhook_model
+
+if TYPE_CHECKING:
+    from signal_webhooks.typing import Any
 
 __all__ = [
     "WebhookSerializer",
@@ -24,7 +30,7 @@ class WebhookSerializer(ModelSerializer):
             "keep_last_response",
         ]
 
-    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
+    def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
         if get_webhook_model().objects.filter(ref=attrs["ref"], endpoint=attrs["endpoint"]).exists():
             msg = "Webhook for this model to this endpoint already exists."
             raise ValidationError(msg)

@@ -10,11 +10,11 @@ from .typing import MAX_COL_SIZE, METHOD_SIGNALS, SignalChoices
 from .utils import decode_cipher_key, is_dict, model_from_reference, reference_for_model
 
 if TYPE_CHECKING:
-    from datetime import datetime
+    import datetime
 
     from django.db.models import Model
 
-    from .typing import Any, Dict, Method, Optional
+    from .typing import Any, Method, Self
 
 
 __all__ = [
@@ -23,11 +23,11 @@ __all__ = [
 ]
 
 
-class WebhookQuerySet(models.QuerySet["Webhook"]):
+class WebhookQuerySet(models.QuerySet):
     """Webhook queryset."""
 
-    def get_for_model(self, instance: Model, method: Method) -> models.QuerySet[Webhook]:
-        kwargs: Dict[str, Any] = webhook_settings.FILTER_KWARGS(instance, method)
+    def get_for_model(self, instance: Model, method: Method) -> Self:
+        kwargs: dict[str, Any] = webhook_settings.FILTER_KWARGS(instance, method)
         return self.filter(
             ref=reference_for_model(type(instance)),
             signal__in=METHOD_SIGNALS[method],
@@ -64,7 +64,7 @@ class WebhookBase(models.Model):
         verbose_name="endpoint",
         help_text="Target endpoint for this webhook.",
     )
-    headers: Dict[str, Any] = models.JSONField(
+    headers: dict[str, Any] = models.JSONField(
         blank=True,
         default=dict,
         verbose_name="headers",
@@ -89,12 +89,12 @@ class WebhookBase(models.Model):
         verbose_name="keep last response",
         help_text="Should the webhook keep a log of the latest response it got?",
     )
-    created: datetime = models.DateTimeField(
+    created: datetime.datetime = models.DateTimeField(
         auto_now_add=True,
         verbose_name="created",
         help_text="When the webhook was created.",
     )
-    updated: datetime = models.DateTimeField(
+    updated: datetime.datetime = models.DateTimeField(
         auto_now=True,
         verbose_name="updated",
         help_text="When the webhook was last updated.",
@@ -106,13 +106,13 @@ class WebhookBase(models.Model):
         verbose_name="last response",
         help_text="Latest response to this webhook.",
     )
-    last_success: Optional[datetime] = models.DateTimeField(
+    last_success: datetime.datetime | None = models.DateTimeField(
         null=True,
         default=None,
         verbose_name="last success",
         help_text="When the webhook last succeeded.",
     )
-    last_failure: Optional[datetime] = models.DateTimeField(
+    last_failure: datetime.datetime | None = models.DateTimeField(
         null=True,
         default=None,
         verbose_name="last failure",
@@ -133,7 +133,7 @@ class WebhookBase(models.Model):
     def __str__(self) -> str:
         return self.name
 
-    def default_headers(self) -> Dict[str, str]:
+    def default_headers(self) -> dict[str, str]:
         headers = self.headers.copy()
         headers.setdefault("Content-Type", "application/json")
         if self.auth_token:

@@ -1,65 +1,56 @@
+from __future__ import annotations
+
 from collections.abc import Callable, Coroutine, Generator, Iterator, Mapping, Sequence
-from typing import (
-    Any,
-    Dict,
-    FrozenSet,
-    List,
-    Literal,
-    NamedTuple,
-    Optional,
-    Set,
-    Tuple,
-    Type,
-    TypedDict,
-    Union,
-)
+from typing import TYPE_CHECKING, Any, Literal, NamedTuple, TypedDict, Union
+
+try:
+    from typing import Self
+except ImportError:
+    from typing_extensions import Self
 
 import django
 from django.db import models
-from django.db.models import QuerySet
-from django.db.models.base import Model
-from django.db.models.signals import ModelSignal
-from httpx._client import UseClientDefault
-from httpx._types import (
-    AuthTypes,
-    CookieTypes,
-    HeaderTypes,
-    QueryParamTypes,
-    RequestContent,
-    RequestData,
-    RequestFiles,
-    TimeoutTypes,
-)
+
+if TYPE_CHECKING:
+    from django.db.models import QuerySet
+    from django.db.models.base import Model
+    from django.db.models.signals import ModelSignal
+    from httpx._client import UseClientDefault
+    from httpx._types import (
+        AuthTypes,
+        CookieTypes,
+        HeaderTypes,
+        QueryParamTypes,
+        RequestContent,
+        RequestData,
+        RequestFiles,
+        TimeoutTypes,
+    )
 
 __all__ = [
     "Any",
     "Callable",
     "ClientKwargs",
     "Coroutine",
-    "Dict",
     "Generator",
     "HooksData",
     "Iterator",
     "JSONData",
     "JSONValue",
-    "List",
     "Literal",
     "Method",
     "NamedTuple",
-    "Optional",
     "PostDeleteData",
     "PostSaveData",
+    "Self",
     "Sequence",
-    "Set",
     "SignalChoices",
-    "Tuple",
-    "Type",
     "TypedDict",
     "Union",
 ]
 
-JSONValue = Union[str, int, float, bool, None, Tuple["JSONValue"], List["JSONValue"], Dict[str, "JSONValue"]]
-JSONData = Union[List[Dict[str, JSONValue]], Dict[str, JSONValue]]
+JSONValue = Union[str, int, float, bool, None, tuple["JSONValue"], list["JSONValue"], dict[str, "JSONValue"]]
+JSONData = Union[list[dict[str, JSONValue]], dict[str, JSONValue]]
 Method = Literal["CREATE", "UPDATE", "DELETE", "M2M_ADD", "M2M_REMOVE", "M2M_CLEAR"]
 M2MAction = Literal["pre_add", "post_add", "pre_remove", "post_remove", "pre_clear", "post_clear"]
 
@@ -70,7 +61,7 @@ class PostSaveData(TypedDict):
     created: bool
     raw: bool
     using: str  # database name
-    update_fields: Union[FrozenSet[str], None]
+    update_fields: Union[frozenset[str], None]
 
 
 class PostDeleteData(TypedDict):
@@ -87,8 +78,8 @@ class M2MChangedData(TypedDict):
     action: M2MAction
     instance: Model
     reverse: bool
-    model: Type[Model]
-    pk_set: Set[int]
+    model: type[Model]
+    pk_set: set[int]
     using: str  # database name
 
 
@@ -178,7 +169,7 @@ class SignalChoices(models.TextChoices):
     )
 
     @classmethod
-    def create_choices(cls) -> Set["SignalChoices"]:
+    def create_choices(cls) -> set[SignalChoices]:
         return {
             cls.CREATE,
             cls.CREATE_OR_UPDATE,
@@ -191,7 +182,7 @@ class SignalChoices(models.TextChoices):
         }
 
     @classmethod
-    def update_choices(cls) -> Set["SignalChoices"]:
+    def update_choices(cls) -> set[SignalChoices]:
         return {
             cls.UPDATE,
             cls.CREATE_OR_UPDATE,
@@ -204,7 +195,7 @@ class SignalChoices(models.TextChoices):
         }
 
     @classmethod
-    def delete_choices(cls) -> Set["SignalChoices"]:
+    def delete_choices(cls) -> set[SignalChoices]:
         return {
             cls.DELETE,
             cls.CREATE_OR_DELETE,
@@ -217,7 +208,7 @@ class SignalChoices(models.TextChoices):
         }
 
     @classmethod
-    def m2m_choices(cls) -> Set["SignalChoices"]:
+    def m2m_choices(cls) -> set[SignalChoices]:
         return {
             cls.M2M,
             cls.CREATE_OR_M2M,
@@ -230,7 +221,7 @@ class SignalChoices(models.TextChoices):
         }
 
 
-METHOD_SIGNALS: Dict[Method, Set[SignalChoices]] = {
+METHOD_SIGNALS: dict[Method, set[SignalChoices]] = {
     "CREATE": SignalChoices.create_choices(),
     "UPDATE": SignalChoices.update_choices(),
     "DELETE": SignalChoices.delete_choices(),
@@ -239,7 +230,7 @@ METHOD_SIGNALS: Dict[Method, Set[SignalChoices]] = {
     "M2M_CLEAR": SignalChoices.m2m_choices(),
 }
 
-ACTION_TO_METHOD: Dict[M2MAction, Method] = {
+ACTION_TO_METHOD: dict[M2MAction, Method] = {
     "post_add": "M2M_ADD",
     "post_remove": "M2M_REMOVE",
     "post_clear": "M2M_CLEAR",
