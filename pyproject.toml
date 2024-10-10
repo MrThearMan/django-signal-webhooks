@@ -27,6 +27,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Framework :: Django :: 4.2",
     "Framework :: Django :: 5.0",
     "Framework :: Django :: 5.1",
@@ -259,7 +260,7 @@ banned-from = [
 max-args = 7
 
 [tool.mypy]
-python_version = "3.12"
+python_version = "3.13"
 warn_return_any = "True"
 warn_unused_configs = "True"
 plugins = [
@@ -295,7 +296,7 @@ django_settings_module = "tests.project.settings"
 [tool.tox]
 legacy_tox_ini = """
 [tox]
-envlist = py{39, 310, 311, 312}-django{42, 50, 51}
+envlist = py{39, 310, 311, 312, 313}-django{42, 50, 51}
 isolated_build = true
 
 [gh-actions]
@@ -304,6 +305,7 @@ python =
     3.10: py310
     3.11: py311
     3.12: py312
+    3.13: py313
 
 [testenv]
 allowlist_externals =
@@ -314,10 +316,10 @@ deps =
     django42: Django>=4.2,<4.3
 
     py39-django50: Django>=4.2,<4.3
-    py{310, 311, 312}-django50: Django>=5.0,<5.1
+    py{310, 311, 312, 313}-django50: Django>=5.0,<5.1
 
     py39-django51: Django>=4.2,<4.3
-    py{310, 311, 312}-django51: Django>=5.1,<5.2
+    py{310, 311, 312, 313}-django51: Django>=5.1,<5.2
 
     asgiref>=3.5.0
     httpx>=0.23.0
@@ -334,5 +336,5 @@ commands =
 """
 
 [build-system]
-requires = ["poetry-core>=1.5.0"]
+requires = ["poetry-core>=1.9.0"]
 build-backend = "poetry.core.masonry.api"
