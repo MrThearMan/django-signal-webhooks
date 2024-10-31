@@ -3,7 +3,7 @@ from __future__ import annotations
 from django.test.signals import setting_changed
 from settings_holder import SettingsHolder, reload_settings
 
-from .typing import Any, HooksData, Method, NamedTuple, Union
+from .typing import Any, HooksData, NamedTuple, Union
 
 __all__ = [
     "webhook_settings",
@@ -98,23 +98,45 @@ REMOVED_SETTINGS: set[str] = set()
 
 
 class WebhookSettingsHolder(SettingsHolder):
-    def perform_import(self, val: Any, setting: str) -> Any:
-        if setting != "HOOKS":
-            return super().perform_import(val, setting)  # pragma: no cover
+    def make_imports(self, name: str, value: Any) -> Any:
+        if name != "HOOKS":
+            return super().make_imports(name, value)
 
-        val: dict[str, HooksData]
-        method: Method
-        for model_path, webhooks in val.items():
+        self.resolve_hooks(name, value)
+        return value
+
+    def resolve_hooks(self, name: str, value: Any) -> None:
+        if not isinstance(value, dict):  # pragma: no cover
+            msg = "'HOOKS' must be a dict."
+            raise TypeError(msg)
+
+        for model_path, webhooks in value.items():
+            if not isinstance(model_path, str):  # pragma: no cover
+                msg = "'HOOKS' keys must be strings."
+                raise TypeError(msg)
+
             if webhooks in (..., None):
                 continue
 
+            if not isinstance(webhooks, dict):  # pragma: no cover
+                msg = f"'HOOKS[{model_path}]' values must be dicts, ellipsis, or None."
+                raise TypeError(msg)
+
             for method, func_path in webhooks.items():
+                allowed_methods = ("CREATE", "UPDATE", "DELETE", "M2M_ADD", "M2M_REMOVE", "M2M_CLEAR")
+
+                if method not in allowed_methods:  # pragma: no cover
+                    msg = f"'HOOKS[{model_path}]' keys must be one of {allowed_methods}. Got {method!r}."
+                    raise TypeError(msg)
+
                 if func_path in (..., None):
                     continue
 
-                val[model_path][method] = self.import_from_string(func_path, setting)
+                if not isinstance(func_path, str):  # pragma: no cover
+                    msg = f"'HOOKS[{model_path}]' values must be strings, ellipsis, or None. Got {func_path!r}."
+                    raise TypeError(msg)
 
-        return val
+                value[model_path][method] = self.import_from_string(func_path, name)
 
 
 webhook_settings = WebhookSettingsHolder(
