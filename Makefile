@@ -10,7 +10,6 @@ export DJANGO_SETTINGS_MODULE = tests.project.settings
 .PHONY: lint
 .PHONY: migrate
 .PHONY: migrations
-.PHONY: mypy
 .PHONY: Makefile
 
 # Trick to allow passing commands to make
@@ -34,7 +33,6 @@ define helptext
   lint                 Run pre-commit hooks on all files.
   migrate              Run migrations.
   migrations           Create migrations.
-  mypy                 Run mypy on all files.
 
   Use quotes (" ") if command contains flags (-h / --help)
 endef
@@ -70,6 +68,3 @@ migrate:
 
 migrations:
 	@poetry run python manage.py makemigrations
-
-mypy:
-	@poetry run mypy django_signal_webhooks/

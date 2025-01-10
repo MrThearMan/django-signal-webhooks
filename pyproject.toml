@@ -1,12 +1,9 @@
-[tool.poetry]
+[project]
 name = "django-signal-webhooks"
 version = "0.3.1"
 description = "Add webhooks to django using signals."
 authors = [
-    "Matti Lamppu <lamppu.matti.akseli@gmail.com>",
-]
-packages = [
-    { include = "signal_webhooks" },
+    { name = "Matti Lamppu", email = "lamppu.matti.akseli@gmail.com" },
 ]
 license = "MIT"
 readme = "README.md"
@@ -35,25 +32,30 @@ classifiers = [
     "Intended Audience :: Developers",
     "Natural Language :: English",
 ]
-include = [
-    "README.md",
-    "LICENSE",
-]
-exclude = [
-    "tests",
+requires-python = ">=3.9,<4"
+dynamic = [
+    "dependencies",
 ]
 
-[tool.poetry.urls]
+[project.urls]
+"Homepage" = "https://mrthearman.github.io/django-signal-webhooks"
+"Repository" = "https://github.com/MrThearMan/django-signal-webhooks"
 "Bug Tracker" = "https://github.com/MrThearMan/django-signal-webhooks/issues"
+"Documentation" = "https://mrthearman.github.io/django-signal-webhooks"
+
+[tool.poetry]
+requires-poetry = ">=2.0.0"
+packages = [
+    { include = "signal_webhooks" },
+]
 
 [tool.poetry.dependencies]
-python = ">=3.9,<4"
 Django = ">=4.2"
 asgiref = ">=3.5.0"
 httpx = ">=0.23.0"
 cryptography = ">=43.0.0"
 django-settings-holder = ">=0.2.1"
-djangorestframework = { version = ">=3.14.0", optional = true}
+djangorestframework = { version = ">=3.14.0", optional = true }
 typing-extensions = { version = ">=4.12.1", python = "<3.11" }
 
 [tool.poetry.group.test.dependencies]
@@ -70,13 +72,7 @@ pymdown-extensions = "10.13"
 mkdocs-mermaid2-plugin = "1.2.1"
 
 [tool.poetry.group.lint.dependencies]
-mypy = "1.14.1"
 pre-commit = "4.0.1"
-django-stubs = "5.1.1"
-djangorestframework-stubs = "3.15.2"
-
-[tool.poetry.extras]
-drf = ["djangorestframework"]
 
 [tool.ruff]
 fix = true
@@ -163,8 +159,7 @@ lint.extend-select = [
     "UP042",    # replace-str-enum
 ]
 lint.ignore = [
-    "ANN101",   # Missing type annotation for `self` in method
-    "ANN102",   # Missing type annotation for `cls` in method
+    "A005",     # Allow shadowning builtin modules
     "ANN401",   # Any-typing allowed
     "RUF012",   # No ClassVar required
     "ARG002",   # Unused method argument
@@ -258,15 +253,6 @@ banned-from = [
 
 [tool.ruff.lint.pylint]
 max-args = 7
-
-[tool.mypy]
-python_version = "3.13"
-warn_return_any = "True"
-warn_unused_configs = "True"
-plugins = [
-    "mypy_django_plugin.main",
-    "mypy_drf_plugin.main",
-]
 
 [tool.coverage.run]
 relative_files = true
