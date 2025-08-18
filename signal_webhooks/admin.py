@@ -10,7 +10,7 @@ from .settings import webhook_settings
 from .utils import get_webhook_model
 
 if TYPE_CHECKING:
-    from .typing import Any, Optional, Union
+    from .typing import Any, Union
 
 __all__ = [
     "WebhookAdmin",
@@ -34,8 +34,8 @@ class WebhookModelForm(forms.ModelForm):
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         if webhook_settings.HIDE_TOKEN:
-            instance: Optional[WebhookModel] = kwargs.get("instance")
-            self._auth_token: Optional[str] = None
+            instance: WebhookModel | None = kwargs.get("instance")
+            self._auth_token: str | None = None
             if instance is not None:
                 self._auth_token = instance.auth_token
                 instance.auth_token = ""
