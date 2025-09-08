@@ -94,7 +94,7 @@ IMPORT_STRINGS: set[Union[bytes, str]] = {
     "TASK_HANDLER",
 }
 
-REMOVED_SETTINGS: set[str] = set()
+REMOVED_SETTINGS: dict[str, str] = {}
 
 
 class WebhookSettingsHolder(SettingsHolder):

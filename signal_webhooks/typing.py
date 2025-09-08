@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, Literal, NamedTuple, TypedDict, Union
 try:
     from typing import Self
 except ImportError:
-    from typing_extensions import Self
+    from typing import Self
 
 import django
 from django.db import models

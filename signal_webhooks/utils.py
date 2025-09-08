@@ -89,7 +89,7 @@ def get_webhook_model() -> type[WebhookBase]:
     ref = getattr(settings, "SIGNAL_WEBHOOKS_CUSTOM_MODEL", "signal_webhooks.models.Webhook")
 
     if ref == "signal_webhooks.models.Webhook":
-        from .models import Webhook
+        from .models import Webhook  # noqa: PLC0415
 
         return Webhook
 
@@ -99,7 +99,7 @@ def get_webhook_model() -> type[WebhookBase]:
         msg = f"{ref!r} is not a model that can be imported."
         raise ImproperlyConfigured(msg) from error
 
-    from .models import WebhookBase
+    from .models import WebhookBase  # noqa: PLC0415
 
     if not issubclass(model, WebhookBase):
         base_ref = reference_for_model(WebhookBase)
