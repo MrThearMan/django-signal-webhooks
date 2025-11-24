@@ -58,7 +58,7 @@ typing-extensions = { version = ">=4.12.1", python = "<3.11" }
 
 [tool.poetry.group.test.dependencies]
 pytest = "9.0.1"
-coverage = "7.11.3"
+coverage = "7.12.0"
 freezegun = "1.5.5"
 pytest-django = "4.11.1"
 nox = "2025.11.12"
@@ -69,7 +69,7 @@ pymdown-extensions = "10.17.1"
 mkdocs-mermaid2-plugin = "1.2.3"
 
 [tool.poetry.group.lint.dependencies]
-pre-commit = "4.4.0"
+pre-commit = "4.5.0"
 
 [tool.poetry.extras]
 drf = ["djangorestframework"]
