@@ -23,7 +23,7 @@ class _WebhookSerializer(python.Serializer):
     def handle_m2m_field(self, obj: models.Model, field: models.Field) -> None:
         try:
             super().handle_m2m_field(obj, field)
-        except Exception as error:  # noqa: BLE001 pragma: no cover
+        except Exception as error:
             logger.debug(f"Skip {field.name!r} during post-delete signal.", exc_info=error)
             self._current[field.name] = []
 
