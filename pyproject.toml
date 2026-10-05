@@ -53,21 +53,21 @@ packages = [
 Django = ">=5.2.17"
 asgiref = ">=3.12.1"
 httpx = ">=0.23.0"
-cryptography = ">=50.0.1"
+cryptography = ">=50.0.2"
 django-settings-holder = ">=0.2.1"
 djangorestframework = { version = ">=3.18.1", optional = true }
 typing-extensions = { version = ">=4.16.0", python = "<3.11" }
 
 [tool.poetry.group.test.dependencies]
 pytest = "9.1.1"
-coverage = "7.16.0"
+coverage = "7.16.2"
 freezegun = "1.5.5"
 pytest-django = "4.14.0"
 nox = "2026.8.17"
 
 [tool.poetry.group.docs.dependencies]
 mkdocs = "1.6.1"
-pymdown-extensions = "11.0.2"
+pymdown-extensions = "12.1"
 mkdocs-mermaid2-plugin = "1.2.3"
 
 [tool.poetry.group.lint.dependencies]
