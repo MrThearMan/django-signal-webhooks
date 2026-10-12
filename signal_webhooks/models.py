@@ -10,7 +10,7 @@ from .typing import MAX_COL_SIZE, METHOD_SIGNALS, SignalChoices
 from .utils import decode_cipher_key, is_dict, model_from_reference, reference_for_model
 
 if TYPE_CHECKING:
-    import datetime
+    import datetime as dt
 
     from django.db.models import Model
 
@@ -89,12 +89,12 @@ class WebhookBase(models.Model):
         verbose_name="keep last response",
         help_text="Should the webhook keep a log of the latest response it got?",
     )
-    created: datetime.datetime = models.DateTimeField(
+    created: dt.datetime = models.DateTimeField(
         auto_now_add=True,
         verbose_name="created",
         help_text="When the webhook was created.",
     )
-    updated: datetime.datetime = models.DateTimeField(
+    updated: dt.datetime = models.DateTimeField(
         auto_now=True,
         verbose_name="updated",
         help_text="When the webhook was last updated.",
@@ -106,13 +106,13 @@ class WebhookBase(models.Model):
         verbose_name="last response",
         help_text="Latest response to this webhook.",
     )
-    last_success: datetime.datetime | None = models.DateTimeField(
+    last_success: dt.datetime | None = models.DateTimeField(
         null=True,
         default=None,
         verbose_name="last success",
         help_text="When the webhook last succeeded.",
     )
-    last_failure: datetime.datetime | None = models.DateTimeField(
+    last_failure: dt.datetime | None = models.DateTimeField(
         null=True,
         default=None,
         verbose_name="last failure",

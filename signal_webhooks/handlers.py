@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-import datetime
+import datetime as dt
 import logging
 from threading import Thread
 from typing import TYPE_CHECKING
@@ -166,17 +166,17 @@ async def fire_webhooks(hooks: models.QuerySet, data: JSONData, client_kwargs: d
                 response: httpx.Response = task.result()
             except Exception as error:
                 logger.exception(f"Webhook {hook.name!r} failed.", exc_info=error)
-                hook.last_failure = datetime.datetime.now(tz=datetime.UTC)
+                hook.last_failure = dt.datetime.now(tz=dt.UTC)
                 webhook_settings.ERROR_HANDLER(hook, error)
                 continue
 
             if response.status_code // 100 == 2:  # noqa: PLR2004
-                hook.last_success = datetime.datetime.now(tz=datetime.UTC)
+                hook.last_success = dt.datetime.now(tz=dt.UTC)
                 if hook.keep_last_response:
                     hook.last_response = truncate(response.content.decode())
 
             else:
-                hook.last_failure = datetime.datetime.now(tz=datetime.UTC)
+                hook.last_failure = dt.datetime.now(tz=dt.UTC)
                 webhook_settings.ERROR_HANDLER(hook, None)
                 if hook.keep_last_response:
                     hook.last_response = truncate(response.content.decode())
